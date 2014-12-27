@@ -31,7 +31,7 @@
 
 library ieee; 
 use ieee.std_logic_1164.all; 
-use ieee.std_logic_arith.all; 
+--use ieee.std_logic_arith.all; 
 --use ieee.std_logic_signed.all; 
  use ieee.std_logic_unsigned.all;
 entity atan_lut is 
@@ -40,6 +40,9 @@ entity atan_lut is
 		sys_rst 	: in std_logic; -- 复位 
 		start 	: in std_logic; -- 开始信号 
 		
+		tan_adj_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
+		offset_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
+		half_wave_voltage	: in std_logic_vector(11 downto 0);--half_wave_voltage
 		chnl_cnt_reg0_out	: in std_logic_vector(9 downto 0);--apd 1 count 0
 		chnl_cnt_reg1_out	: in std_logic_vector(9 downto 0);--apd 2 count 0
 		chnl_cnt_reg2_out	: in std_logic_vector(9 downto 0);--apd 1 count 1

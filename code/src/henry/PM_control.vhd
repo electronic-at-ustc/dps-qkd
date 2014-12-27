@@ -73,7 +73,7 @@ entity PM_control is
 		
 		---lut ram module-------------
 		---
---		lut_addr			:	out	std_logic_vector(9 downto 0);
+		addr_reset			:	out	std_logic;
 	--	lut_data_vld	:	in	std_logic;
 --		lut_data			:	in	std_logic_vector(15 downto 0);
 		

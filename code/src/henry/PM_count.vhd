@@ -241,8 +241,8 @@ end process;
 alt_out : process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		
-		--alt_begin <= '0';
+		alg_data_wr					<= '0';
+		alg_data_wr_data			<= (others => '0');
 	elsif rising_edge(sys_clk_80M) then
 		if(wait_finish_reg = '1' and wait_dac_cnt /= 0) then ---10 counter
 			alg_data_wr					<= '1';

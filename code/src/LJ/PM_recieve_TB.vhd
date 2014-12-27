@@ -87,13 +87,13 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
    signal lut_ram_rd_addr : std_logic_vector(9 downto 0);
    signal lut_ram_128_data : std_logic_vector(11 downto 0);
    signal alg_data_wr : std_logic;
-   signal alg_data_wr_data : std_logic_vector(31 downto 0);
+   signal alg_data_wr_data : std_logic_vector(47 downto 0);
    -- No clocks detected in port list. Replace sys_clk_80M below with 
    -- appropriate port name 
  
-   constant sys_clk_80M_period : time := 4 ns;
-	constant apd_fpga_hit0_period : time := 200 ns;
-	constant apd_fpga_hit1_period : time := 300 ns;
+   constant sys_clk_80M_period : time := 12.5 ns;
+	constant apd_fpga_hit0_period : time := 8 us;
+	constant apd_fpga_hit1_period : time := 13 us;
  
 BEGIN
  

@@ -150,11 +150,14 @@ architecture Behavioral of PM_receive      is
 		reg_wr_addr : IN std_logic_vector(3 downto 0);
 		reg_wr_data : IN std_logic_vector(15 downto 0);
 --		lut_data : IN std_logic_vector(15 downto 0);
-		--exp_running : IN std_logic;
+		addr_reset : out std_logic;
 		chopper_ctrl : IN std_logic;          
 --		Dac_CLK : OUT std_logic;
 		Dac_Ena : OUT std_logic;
 		Dac_Data : OUT std_logic_vector(11 downto 0);
+		half_wave_voltage : out std_logic_vector(11 downto 0);
+		offset_voltage : out std_logic_vector(11 downto 0);
+		tan_adj_voltage : out std_logic_vector(11 downto 0);
 		Sys_Rst : OUT std_logic;
 		POC_ctrl : OUT std_logic_vector(6 downto 0);
 		POC_ctrl_en : OUT std_logic
