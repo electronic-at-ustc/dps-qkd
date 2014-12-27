@@ -49,6 +49,8 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
          POC_ctrl : OUT  std_logic_vector(6 downto 0);
          POC_ctrl_en : OUT  std_logic;
 			pm_steady_test : IN std_logic;
+			scan_data_store_en : in  STD_LOGIC; 
+			pm_data_store_en : in  STD_LOGIC; 
          reg_wr : IN  std_logic;
          reg_wr_addr : IN  std_logic_vector(3 downto 0);
          reg_wr_data : IN  std_logic_vector(15 downto 0);
@@ -58,7 +60,7 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
          lut_ram_128_addr : IN  std_logic_vector(6 downto 0);
          lut_ram_128_data : OUT  std_logic_vector(11 downto 0);
          alg_data_wr : OUT  std_logic;
-         alg_data_wr_data : OUT  std_logic_vector(31 downto 0);
+         alg_data_wr_data : OUT  std_logic_vector(47 downto 0);
          chopper_ctrl : IN  std_logic
         );
     END COMPONENT;

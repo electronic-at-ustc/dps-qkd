@@ -102,8 +102,8 @@ signal 		chnl_cnt_reg5	:  std_logic_vector(9 downto 0);
 signal 		chnl_cnt_reg6	:  std_logic_vector(9 downto 0);
 signal 		chnl_cnt_reg7	:  std_logic_vector(9 downto 0);
 		
-signal 		chnl_cnt_reg8	:  std_logic_vector(9 downto 0);
-signal 		chnl_cnt_reg9	:  std_logic_vector(9 downto 0);
+--signal 		chnl_cnt_reg8	:  std_logic_vector(9 downto 0);
+--signal 		chnl_cnt_reg9	:  std_logic_vector(9 downto 0);
 
 begin
 chnl_cnt_reg0_out <= chnl_cnt_reg0;

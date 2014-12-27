@@ -115,8 +115,14 @@ architecture Behavioral of PM_receive      is
 		lut_ram_rd_addr	: out std_logic_vector(9 downto 0); 
 		lut_ram_rd_data	: in std_logic_vector(15 downto 0); 
 		------lut_ram 128------------------------
+		addr_reset : in STD_LOGIC;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
-		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0);         
+		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
+		------
+		tan_adj_voltage : in std_logic_vector(11 downto 0);
+		half_wave_voltage : in std_logic_vector(11 downto 0);
+		offset_voltage : in std_logic_vector(11 downto 0);
+		------
 		result_ok : OUT std_logic;
 		DAC_set_addr   : out std_logic_vector(6 downto 0);
 		DAC_set_result : OUT std_logic_vector(11 downto 0)

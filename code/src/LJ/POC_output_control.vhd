@@ -154,12 +154,12 @@ begin
 	elsif rising_edge(sys_clk) then
 		pm_dac_en_d1	<= pm_dac_en;
 		if(pm_rd_vld = '1') then---random data control pm voltage
-			dac_data	<=	x"C" & lut_ram_128_data;
+			dac_data	<=	x"4" & lut_ram_128_data;
 			dac_ena	<= '1';
 		else
 			if(pm_dac_en_d1 = '0' and pm_dac_en = '1') then --rising edge  pm steady control dac write
 				dac_ena	<= '1';
-				dac_data	<= x"C" & pm_dac_data;
+				dac_data	<= x"4" & pm_dac_data;
 			else
 				if(dac_test_en = '1') then --test enable
 					dac_ena	<= '1';

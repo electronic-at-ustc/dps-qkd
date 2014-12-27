@@ -47,6 +47,9 @@ entity PM_control is
 		Dac_set_result :in    STD_LOGIC_VECTOR (11 downto 0);
 		--poc interface
 		--POC_ctrl		: out std_logic_vector(13 downto 0);
+		half_wave_voltage : out std_logic_vector(11 downto 0);
+		tan_adj_voltage : out std_logic_vector(11 downto 0);
+		offset_voltage : out std_logic_vector(11 downto 0);
 		POC_ctrl		 : out std_logic_vector(6 downto 0);
 		POC_ctrl_en	 : out std_logic;
 		--port to(from) count--------
