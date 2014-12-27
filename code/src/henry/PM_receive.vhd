@@ -215,7 +215,7 @@ architecture Behavioral of PM_receive      is
 	signal use_4apd     : std_logic;
 	signal alt_begin :  std_logic;
 	signal result_ok :  std_logic;
---	signal Dac_Ena :  std_logic;
+	signal addr_reset :  std_logic;
 --	signal Dac_Finish :  std_logic;
 	signal Sys_Rst :  std_logic;
 	signal DAC_set_addr   : std_logic_vector(6 downto 0);
@@ -232,6 +232,10 @@ architecture Behavioral of PM_receive      is
 	signal chnl_cnt_reg7_out : std_logic_vector(9 downto 0);
 --	signal chnl_cnt_reg8_out : std_logic_vector(9 downto 0);
 --	signal chnl_cnt_reg9_out : std_logic_vector(9 downto 0);
+
+	signal tan_adj_voltage : std_logic_vector(11 downto 0);
+	signal half_wave_voltage : std_logic_vector(11 downto 0);
+	signal offset_voltage : std_logic_vector(11 downto 0);
 	
 	signal	wait_start	 :	std_logic;
 	signal	wait_count 	 : std_logic_vector(19 downto 0);
@@ -246,6 +250,8 @@ begin
 		start => alt_begin,
 		use_8apd => use_8apd,
 		use_4apd => use_4apd,
+		offset_voltage =>offset_voltage,
+		half_wave_voltage =>half_wave_voltage,
 		chnl_cnt_reg0_out =>chnl_cnt_reg0_out,
 		chnl_cnt_reg1_out =>chnl_cnt_reg1_out,
 		chnl_cnt_reg2_out =>chnl_cnt_reg2_out,
@@ -256,6 +262,8 @@ begin
 		chnl_cnt_reg7_out =>chnl_cnt_reg7_out,
 		lut_ram_rd_addr => lut_ram_rd_addr,
 		lut_ram_rd_data => lut_ram_rd_data,
+		addr_reset => addr_reset,
+		tan_adj_voltage => tan_adj_voltage,
 		lut_ram_128_addr => lut_ram_128_addr,
 		lut_ram_128_data => lut_ram_128_data,
 		result_ok => result_ok,
@@ -266,19 +274,22 @@ begin
 	Inst_PM_control: PM_control PORT MAP(
 		sys_clk_80M => sys_clk_80M,
 		sys_rst_n => sys_rst_n,
-
+		offset_voltage =>offset_voltage,
+		half_wave_voltage =>half_wave_voltage,
 		use_8apd => use_8apd,
 		use_4apd => use_4apd,
 		Dac_Ena => Dac_Ena,
 		Dac_Data => DAC_set_data,
 		Sys_Rst =>  Sys_Rst,
 		Dac_set_result => Dac_set_result,
+		tan_adj_voltage => tan_adj_voltage,
 		wait_start => wait_start,
 		wait_count => wait_count,
 		wait_finish => wait_finish,
 		wait_dac_cnt => wait_dac_cnt,
 		POC_ctrl => POC_ctrl,
 		POC_ctrl_en => POC_ctrl_en,
+		addr_reset => addr_reset,
 		alt_begin => alt_begin,
 		alt_end => result_ok,
 		reg_wr => reg_wr,
@@ -311,7 +322,6 @@ begin
 		wait_count		=> wait_count,
 		alg_data_wr => alg_data_wr,
 		alg_data_wr_data => alg_data_wr_data,
---		pm_rdy_out => pm_rdy,
 --		alt_end => result_ok,
 --		scan_data_store_en	=> scan_data_store_en,
 --		pm_data_store_en	=> pm_data_store_en,
