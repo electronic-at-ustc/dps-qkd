@@ -72,6 +72,8 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
    signal dac_finish : std_logic := '0';
    signal reg_wr : std_logic := '0';
    signal pm_steady_test : std_logic := '0';
+   signal scan_data_store_en : std_logic := '0';
+   signal pm_data_store_en : std_logic := '0';
    signal reg_wr_addr : std_logic_vector(3 downto 0) := (others => '0');
    signal reg_wr_data : std_logic_vector(15 downto 0) := (others => '0');
    signal apd_fpga_hit : std_logic_vector(1 downto 0) := (others => '0');
@@ -108,6 +110,8 @@ BEGIN
           POC_ctrl_en => POC_ctrl_en,
           reg_wr => reg_wr,
           pm_steady_test => pm_steady_test,
+          pm_data_store_en => pm_data_store_en,
+          scan_data_store_en => scan_data_store_en,
           reg_wr_addr => reg_wr_addr,
           reg_wr_data => reg_wr_data,
           apd_fpga_hit => apd_fpga_hit,
@@ -156,13 +160,78 @@ BEGIN
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
-      wait for 100 ns;	
+      wait for 1 us;	
 		sys_rst_n	<= '1';
       wait for sys_clk_80M_period*10;
-		wait for 100 us;	
+		wait for 10 us;	
+		wait until rising_edge(sys_clk_80m);
+		
+		pm_data_store_en	<= '1';
+
+		pm_steady_test	<= '1';
+		wait for 100 ns ;
+		
+		pm_data_store_en	<= '1';
+		
+		pm_steady_test	<= '0';
+		wait for 105 ms ;
+		
+		pm_steady_test	<= '1';
+		wait for 100 ns ;
+		
+		pm_data_store_en	<= '1';
+		
+		pm_steady_test	<= '0';
+		wait for 1000 ms ;
+		
+		wait;
+		
 		chopper_ctrl	<= '1';
       -- insert stimulus here 
+		wait for 1ms ;
+		pm_data_store_en	<= '1';
+		
+		wait for 1ms ;
+		chopper_ctrl	<= '0';
+		
+		wait for 1ms ;
+		chopper_ctrl	<= '1';
+		wait for 30ms ;
+		pm_data_store_en	<= '0';
+		wait for 1ms ;
+		chopper_ctrl	<= '0';
+		
+		wait for 1ms ;
+		scan_data_store_en	<= '1';
+		
+		
+		wait for 1ms ;
+		pm_steady_test	<= '1';
+		
+		wait for 12.5ns ;
+		pm_steady_test	<= '0';
 
+		wait for 1ms ;
+		scan_data_store_en	<= '0';
+		pm_data_store_en	<= '1';
+		wait for 10ms ;
+		pm_steady_test	<= '1';
+		
+		wait for 12.5ns ;
+		pm_steady_test	<= '0';
+		
+		wait for 10ms ;
+		pm_steady_test	<= '1';
+		
+		wait for 12.5ns ;
+		pm_steady_test	<= '0';
+		
+		wait for 10ms ;
+		pm_steady_test	<= '1';
+		
+		wait for 12.5ns ;
+		pm_steady_test	<= '0';
+		
       wait;
    end process;
 

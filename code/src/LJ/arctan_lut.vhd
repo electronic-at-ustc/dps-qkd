@@ -61,6 +61,7 @@ entity atan_lut is
 		lut_ram_rd_addr	: out std_logic_vector(9 downto 0); 
 		lut_ram_rd_data	: in std_logic_vector(15 downto 0); 
 		------lut_ram 128------------------------
+		addr_reset : in STD_LOGIC;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
 		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
 	
@@ -100,6 +101,21 @@ COMPONENT lut_ram_128
     doutb : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
   );
 END COMPONENT;
+
+------------- Begin Cut here for COMPONENT Declaration ------ COMP_TAG
+COMPONENT multiplyer_12_10
+  PORT (
+    clk : IN STD_LOGIC;
+    a : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+    b : IN STD_LOGIC_VECTOR(10 DOWNTO 0);
+    p : OUT STD_LOGIC_VECTOR(10 DOWNTO 0)
+  );
+END COMPONENT;
+-- COMP_TAG_END ------ End COMPONENT Declaration ------------
+
+-- The following code must appear in the VHDL architecture
+-- body. Substitute your own instance name and net names.
+
 --COMPONENT lut_ram
 --  PORT (
 --    clka : IN STD_LOGIC;
@@ -153,8 +169,9 @@ END COMPONENT;
    
 --	signal lut_ram_rd_addr : std_logic_vector(9 downto 0); -- 
 --	signal lut_ram_rd_data : std_logic_vector(11 downto 0); --  
-	signal dac_ft		: std_logic_vector(2 downto 0);
+	signal dac_ft		: std_logic_vector(1 downto 0);
 	signal lut_ram_128_addra		: std_logic_vector(6 downto 0);
+	signal one_of_two_voltage	: std_logic_vector(10 downto 0);
 --	signal lut_wr_en :std_logic; --test wire
 	
 	signal lut_ram_128_wen :std_logic;
@@ -162,6 +179,8 @@ END COMPONENT;
 --	signal lut_ram_128_douta :std_logic_vector(11 downto 0) ;
 	signal result_ok_reg :std_logic;
 	signal DAC_set_result_ram :std_logic_vector(11 downto 0) ;
+	signal dac_set_result_reg :std_logic_vector(11 downto 0) ;
+	signal temp_result_reg :std_logic_vector(11 downto 0) ;
 	--signal reg0_and_reg1 : std_logic_vector(10 downto 0) := "00000000000" ; -- := 连续使用	
 	signal cnt : integer range 0 to 511; 
 --signal cnt : std_logic_vector(8 downto 0);
@@ -181,6 +200,7 @@ divider_10_inst : divider_10
 			quotient => quotient,
 			fractional => fractional
 		);
+
 -- INST_TAG_END ------ End INSTANTIATION Template ------------ 
  
 -- The following code must appear in the VHDL architecture
@@ -251,10 +271,14 @@ end process;
 	if(sys_rst = '1') then
 		lut_ram_128_addra	<= (others => '0');
 	elsif sys_clk'event and sys_clk = '1' then 
-		if(lut_ram_128_wen = '1') then
-				lut_ram_128_addra	<= lut_ram_128_addra+1; --if（wen）
+		if(addr_reset = '1') then
+			lut_ram_128_addra	<= (others => '0');
 		else
-				lut_ram_128_addra  <= lut_ram_128_addra;
+			if(lut_ram_128_wen = '1') then
+					lut_ram_128_addra	<= lut_ram_128_addra+1; --if（wen）
+			else
+					lut_ram_128_addra  <= lut_ram_128_addra;
+			end if;
 		end if;
 	end if;
 	end process;
@@ -270,7 +294,7 @@ end process;
 	end process;
 	
 	process(count4, count2) begin
-		if(count4 > count2) then--sin x is +
+		if(count4 > count2) then--cos x is +
 			sign_of_cos	<= '1';
 		else
 			sign_of_cos	<= '0';
@@ -296,7 +320,7 @@ end process;
 		if(sys_rst = '1') then
 			cos_x	<= (others => '0');
 		elsif sys_clk'event and sys_clk = '1' then 
-				if(sign_of_cos = '1') then--sin x is +
+				if(sign_of_cos = '1') then--cos x is +
 					cos_x	<= count4 - count2;
 				else
 					cos_x	<= count2 - count4;
@@ -433,46 +457,133 @@ end process;
 					lut_ram_rd_addr 	<= final_fractional;
 				end if;
 				
-				artan_pitov					<=lut_ram_rd_data(8 downto 0);
+				artan_pitov					<=lut_ram_rd_data(8 downto 0);--this is 1/8
 --				if(cnt = 297)then
 --					
 --				end if;
 		end if;
 	end process;
+	
+--	dac_ft <= sign_of_cos & tan_x_large_1;
+	alt_temp_result: process(sys_clk, sys_rst) begin
+		if(sys_rst = '1') then
+			temp_result_reg   	<= (others => '0');
+		elsif sys_clk'event and sys_clk = '1' then 
+			if(tan_x_large_1 = '0') then
+				temp_result_reg <="000" & artan_pitov(8 downto 0);--(0,1/4 PI)
+			else
+				temp_result_reg <=tan_adj_voltage + artan_pitov(8 downto 0);--(1/4,2/4)PI
+			end if;
+--			case (dac_ft) is--
+--				when"10" => temp_result_reg <= X"000" + artan_pitov(8 downto 0); --(0,1/4 PI)
+--				when"11" => temp_result_reg <= X"192" + artan_pitov(8 downto 0); --(1/4,2/4)PI
+--				when"01" => temp_result_reg <= X"324" + artan_pitov(8 downto 0); --(2/4,3/4)PI
+--				when"00" => temp_result_reg <= X"4B6" + artan_pitov(8 downto 0); --(3/4,4/4)PI
+--				when"10" => 											temp_result_reg <= "00"  & artan_pitov(8 downto 0); --(0,1/2)
+--				when"11" => if(artan_pitov(8) = '1') then 	temp_result_reg <= "010" & artan_pitov(7 downto 0); --(1/2,2/2
+--								 else										temp_result_reg <= "001" & artan_pitov(7 downto 0);end if;
+--				when"01" => 											temp_result_reg <= "01"  & artan_pitov(8 downto 0); --(2/2,3/2)
+--				when"00" => if(artan_pitov(8) = '1') then 	temp_result_reg <= "100" & artan_pitov(7 downto 0); --(3/2,4/2
+--								 else										temp_result_reg <= "011" & artan_pitov(7 downto 0);end if; 			 
+--				WHEN OTHERS => NULL;
+--			end case;
+		end if;
+	end process;
+	
+	----one_of_two_voltage is 12 bit
+	----when one_of_two_voltage < x"800", it 1/2 bit
+	------------- Begin Cut here for INSTANTIATION Template ----- INST_TAG
+  multiplyer_10_9_inst : multiplyer_12_10
+  PORT MAP (
+    clk => sys_clk,
+    a => half_wave_voltage(10 downto 0),
+    b => temp_result_reg(10 downto 0),
+    p => one_of_two_voltage(10 downto 0)
+  );
+  
+--1.	lut表深度1024 宽度9位,每9位表示0~1/2
+--2.	half_wave_voltage半波电压寄存器10位，表示0~2.5V, half_wave_voltage*5*2/4096
+--3.	Arctan()计算通过lut查找得到0~1/2的数artan_pitov
+--4.	artan_pitov * half_wave_voltage得到 0~1/2半波电压的值one_of_two_voltage(取最高7位，表示范围：0~(2.5/2)V)
+--5.	根据sin cos的符号以及tan大于1的情况计算输出的DAC值,其中0V时为x"800",输出电压为((DAC_value - x"800")/4096)*5所以：
+--a)	0~1/2半波电压= x"800" + one_of_two_voltage
+--b)	1/2~2/2半波电压= x"800" + half_wave_voltage/2+ one_of_two_voltage
+--c)	2/2~3/2半波电压= x"800" + half_wave_voltage/4+ one_of_two_voltage
+--d)	3/2~4/2半波电压= x"800" + half_wave_voltage*3/8+ one_of_two_voltage
+--e)	-1/2~0半波电压= x"800" - one_of_two_voltage
+--f)	-2/2~-1/2半波电压= x"800" - half_wave_voltage/8- one_of_two_voltage
+--g)	-3/2~-2/2半波电压= x"800" - half_wave_voltage/4- one_of_two_voltage
+--h)	-4/2~-3/2半波电压= x"800" - half_wave_voltage*3/8- one_of_two_voltage
+--6.	输出的DAC值加上或减去1个偏移量就得到最终的DAC输出
+
 	-------------确认 存储的tanx的形式 
 	-------------是否是0-pi/4
 	----6------
-	--根据sin x, cos x的符号计算出比例值
+	--lut 查找表中的数代表 0-1/2
+	--根据sin x, cos x,tan_x_large_1的符号计算出所属相位
+	--将此值与半波电压值相乘得到最终的DAC设置值
 	--sin x > 0 cos x > 0 tan_x_large_1 = 0
-	--0 < x < pi/4
+	--0 < x < pi/2
+	--vpm = -phi/π*2*V [-1/2,0]
 	--sin x > 0 cos x > 0 tan_x_large_1 = 1
-	--0 < x < pi/4
-	dac_ft <= sign_of_sin & sign_of_cos & tan_x_large_1;
+	--pi/2 < x < 2*pi/2
+	--vpm = -phi/π*2*V [-2/2,-1/2]
+	--sin x > 0 cos x < 0 tan_x_large_1 = 1
+	--2*pi/2 < x < 3*pi/2
+	--vpm = -phi/π*2*V [-3/2,-2/2]
+	--sin x > 0 cos x < 0 tan_x_large_1 = 0
+	--3*pi/2 < x < 2*pi
+	--vpm = -phi/π*2*V [-4/2,-3/2]
+	
+	--sin x < 0 cos x > 0 tan_x_large_1 = 0
+	--[-2*pi < x < -3*pi/2]
+	--vpm = -phi/π*2*V [3/2,4/2]
+	--sin x < 0 cos x > 0 tan_x_large_1 = 1
+	--[-3*pi/2 < x < -2*pi/2]
+	--vpm = -phi/π*2*V [2/2,3/2]
+	--sin x < 0 cos x < 0 tan_x_large_1 = 1
+	--[-2*pi/2 < x < -1*pi/2]
+	--vpm = -phi/π*2*V [1/2,2/2]
+	--sin x < 0 cos x < 0 tan_x_large_1 = 0
+	--[-1*pi/2 < x < 0]
+	--vpm = -phi/π*2*V [0,1/2]
+	dac_ft <= sign_of_sin & sign_of_cos;
 	alt_result: process(sys_clk, sys_rst) begin
+		if(sys_rst = '1') then
+			DAC_set_result_reg   	<= (others => '0');
+		elsif sys_clk'event and sys_clk = '1' then 
+--			if(sign_of_sin = '0') then--when sin x is + output voltage is -
+--				DAC_set_result_reg <='1' & one_of_two_voltage(10 downto 0);
+--			else
+--				DAC_set_result_reg <=x"800" - one_of_two_voltage(10 downto 0);
+--			end if;
+			case dac_ft is
+				when"11" => DAC_set_result_reg <=x"800" - one_of_two_voltage(10 downto 0); --(-1V/2, 0)
+				when"10" => DAC_set_result_reg <=x"800" - half_wave_voltage(11 downto 1) - one_of_two_voltage(10 downto 0); --(-2V/2,-1V/2)
+				when"00" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 1) + one_of_two_voltage(10 downto 0); --(-3V/2,-2V/2)
+				when"01" => DAC_set_result_reg <=x"800" + one_of_two_voltage(10 downto 0); --(-4V/2,-3V/2)				 
+--				
+--				when"010" => DAC_set_result_reg <=x"800" + one_of_two_voltage(10 downto 1); --(1V/2, 0)
+--				when"011" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 2) + one_of_two_voltage(10 downto 1); --(1V/2,2V/2)
+--				when"001" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 1) + one_of_two_voltage(10 downto 1); --(2V/2,3V/2)
+--				when"000" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 2) + half_wave_voltage(11 downto 1) + one_of_two_voltage(10 downto 1); --(3V/2,4V/2)
+				WHEN OTHERS => NULL;
+			end case;
+		end if;
+	end process;
+	
+		gen_offset_voltage: process(sys_clk, sys_rst) begin
 		if(sys_rst = '1') then
 			DAC_set_result_ram   	<= (others => '0');
 			result_ok_reg   <='0';
 		elsif sys_clk'event and sys_clk = '1' then 
-				if(cnt = 300) then
-					case dac_ft is
-						when"110" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="000"&artan_pitov;
-						when"010" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="100"&artan_pitov;
-						when"100" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="010"&artan_pitov;
-						when"000" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="110"&artan_pitov;
-						when"111" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="001"&artan_pitov;
-						when"011" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="101"&artan_pitov;
-						when"101" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="011"&artan_pitov;
-						when"001" => result_ok_reg <= '1';					
-										 DAC_set_result_ram <="111"&artan_pitov;
-						WHEN OTHERS => NULL;
-					end case;
+				if(cnt = 305) then
+					result_ok_reg   <='1';
+					if(offset_voltage(11) ='1') then
+						DAC_set_result_ram	<= DAC_set_result_reg -  offset_voltage(10 downto 0);
+					else
+						DAC_set_result_ram	<= DAC_set_result_reg +  offset_voltage(10 downto 0);
+					end if;
 				else
 					result_ok_reg   <='0';
 				end if;
