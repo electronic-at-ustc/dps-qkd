@@ -1,0 +1,167 @@
+--------------------------------------------------------------------------------
+-- Company: 
+-- Engineer:
+--
+-- Create Date:   22:51:31 12/19/2014
+-- Design Name:   
+-- Module Name:   E:/Work/FPGA/ground_pro_all_DPS_QKD_test/ground_pro_use_PPG/PM_recieve.vhd
+-- Project Name:  ground_pro
+-- Target Device:  
+-- Tool versions:  
+-- Description:   
+-- 
+-- VHDL Test Bench Created by ISE for module: PM_receive
+-- 
+-- Dependencies:
+-- 
+-- Revision:
+-- Revision 0.01 - File Created
+-- Additional Comments:
+--
+-- Notes: 
+-- This testbench has been automatically generated using types std_logic and
+-- std_logic_vector for the ports of the unit under test.  Xilinx recommends
+-- that these types always be used for the top-level I/O of a design in order
+-- to guarantee that the testbench will bind correctly to the post-implementation 
+-- simulation model.
+--------------------------------------------------------------------------------
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+ 
+-- Uncomment the following library declaration if using
+-- arithmetic functions with Signed or Unsigned values
+--USE ieee.numeric_std.ALL;
+ 
+ENTITY PM_recieve_TB IS
+END PM_recieve_TB;
+ 
+ARCHITECTURE behavior OF PM_recieve_TB IS 
+ 
+    -- Component Declaration for the Unit Under Test (UUT)
+ 
+    COMPONENT PM_receive
+    PORT(
+         sys_clk_80M : IN  std_logic;
+         sys_rst_n : IN  std_logic;
+         dac_finish : IN  std_logic;
+         Dac_Ena : OUT  std_logic;
+         dac_data : OUT  std_logic_vector(11 downto 0);
+         POC_ctrl : OUT  std_logic_vector(6 downto 0);
+         POC_ctrl_en : OUT  std_logic;
+			pm_steady_test : IN std_logic;
+         reg_wr : IN  std_logic;
+         reg_wr_addr : IN  std_logic_vector(3 downto 0);
+         reg_wr_data : IN  std_logic_vector(15 downto 0);
+         apd_fpga_hit : IN  std_logic_vector(1 downto 0);
+         lut_ram_rd_addr : OUT  std_logic_vector(9 downto 0);
+         lut_ram_rd_data : IN  std_logic_vector(15 downto 0);
+         lut_ram_128_addr : IN  std_logic_vector(6 downto 0);
+         lut_ram_128_data : OUT  std_logic_vector(11 downto 0);
+         alg_data_wr : OUT  std_logic;
+         alg_data_wr_data : OUT  std_logic_vector(31 downto 0);
+         chopper_ctrl : IN  std_logic
+        );
+    END COMPONENT;
+    
+
+   --Inputs
+   signal sys_clk_80M : std_logic := '0';
+   signal sys_rst_n : std_logic := '0';
+   signal dac_finish : std_logic := '0';
+   signal reg_wr : std_logic := '0';
+   signal pm_steady_test : std_logic := '0';
+   signal reg_wr_addr : std_logic_vector(3 downto 0) := (others => '0');
+   signal reg_wr_data : std_logic_vector(15 downto 0) := (others => '0');
+   signal apd_fpga_hit : std_logic_vector(1 downto 0) := (others => '0');
+   signal lut_ram_rd_data : std_logic_vector(15 downto 0) := (others => '0');
+   signal lut_ram_128_addr : std_logic_vector(6 downto 0) := (others => '0');
+   signal chopper_ctrl : std_logic := '0';
+
+ 	--Outputs
+   signal Dac_Ena : std_logic;
+   signal dac_data : std_logic_vector(11 downto 0);
+   signal POC_ctrl : std_logic_vector(6 downto 0);
+   signal POC_ctrl_en : std_logic;
+   signal lut_ram_rd_addr : std_logic_vector(9 downto 0);
+   signal lut_ram_128_data : std_logic_vector(11 downto 0);
+   signal alg_data_wr : std_logic;
+   signal alg_data_wr_data : std_logic_vector(31 downto 0);
+   -- No clocks detected in port list. Replace sys_clk_80M below with 
+   -- appropriate port name 
+ 
+   constant sys_clk_80M_period : time := 4 ns;
+	constant apd_fpga_hit0_period : time := 200 ns;
+	constant apd_fpga_hit1_period : time := 300 ns;
+ 
+BEGIN
+ 
+	-- Instantiate the Unit Under Test (UUT)
+   uut: PM_receive PORT MAP (
+          sys_clk_80M => sys_clk_80M,
+          sys_rst_n => sys_rst_n,
+          dac_finish => dac_finish,
+          Dac_Ena => Dac_Ena,
+          dac_data => dac_data,
+          POC_ctrl => POC_ctrl,
+          POC_ctrl_en => POC_ctrl_en,
+          reg_wr => reg_wr,
+          pm_steady_test => pm_steady_test,
+          reg_wr_addr => reg_wr_addr,
+          reg_wr_data => reg_wr_data,
+          apd_fpga_hit => apd_fpga_hit,
+          lut_ram_rd_addr => lut_ram_rd_addr,
+          lut_ram_rd_data => lut_ram_rd_data,
+          lut_ram_128_addr => lut_ram_128_addr,
+          lut_ram_128_data => lut_ram_128_data,
+          alg_data_wr => alg_data_wr,
+          alg_data_wr_data => alg_data_wr_data,
+          chopper_ctrl => chopper_ctrl
+        );
+
+   -- Clock process definitions
+   sys_clk_80M_process :process
+   begin
+		sys_clk_80M <= '0';
+		wait for sys_clk_80M_period/2;
+		sys_clk_80M <= '1';
+		wait for sys_clk_80M_period/2;
+   end process;
+	
+	apd_fpga_hit0: process
+	begin
+		apd_fpga_hit(0) <= '0';
+		wait for apd_fpga_hit0_period/2;
+		apd_fpga_hit(0) <= '1';
+		wait for apd_fpga_hit0_period/2;
+   end process;
+	apd_fpga_hit1: process
+	begin
+		apd_fpga_hit(1) <= '0';
+		wait for apd_fpga_hit1_period/2;
+		apd_fpga_hit(1) <= '1';
+		wait for apd_fpga_hit1_period/2;
+   end process;
+ 
+ dac_finish_process :process
+   begin
+		dac_finish <= '1';
+		wait until rising_edge(Dac_Ena);
+		dac_finish <= '0';
+		wait for 500 ns;
+   end process;
+
+   -- Stimulus process
+   stim_proc: process
+   begin		
+      -- hold reset state for 100 ns.
+      wait for 100 ns;	
+		sys_rst_n	<= '1';
+      wait for sys_clk_80M_period*10;
+		wait for 100 us;	
+		chopper_ctrl	<= '1';
+      -- insert stimulus here 
+
+      wait;
+   end process;
+
+END;
