@@ -278,7 +278,7 @@
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="1"/>
       <association xil_pn:name="Implementation" xil_pn:seqID="3"/>
     </file>
-    <file xil_pn:name="atan_lut_TB.vhd" xil_pn:type="FILE_VHDL">
+    <file xil_pn:name="code/src/LJ/atan_lut_TB.vhd" xil_pn:type="FILE_VHDL">
       <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="6"/>
       <association xil_pn:name="PostMapSimulation" xil_pn:seqID="248"/>
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="248"/>
@@ -586,8 +586,8 @@
     <property xil_pn:name="Run Design Rules Checker (DRC)" xil_pn:value="true" xil_pn:valueState="default"/>
     <property xil_pn:name="Safe Implementation" xil_pn:value="No" xil_pn:valueState="default"/>
     <property xil_pn:name="Security" xil_pn:value="Enable Readback and Reconfiguration" xil_pn:valueState="default"/>
-    <property xil_pn:name="Selected Module Instance Name" xil_pn:value="/PM_recieve_TB" xil_pn:valueState="non-default"/>
-    <property xil_pn:name="Selected Simulation Root Source Node Behavioral" xil_pn:value="work.PM_recieve_TB" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Selected Module Instance Name" xil_pn:value="/PM_recieve_TB/uut/Inst_PM_control" xil_pn:valueState="non-default"/>
+    <property xil_pn:name="Selected Simulation Root Source Node Behavioral" xil_pn:value="work.PM_control" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Map" xil_pn:value="work.cpldif_burst_test" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Route" xil_pn:value="work.ground_pro_top_tb" xil_pn:valueState="non-default"/>
     <property xil_pn:name="Selected Simulation Root Source Node Post-Translate" xil_pn:value="work.ground_pro_top_tb" xil_pn:valueState="non-default"/>

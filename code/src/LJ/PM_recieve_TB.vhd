@@ -167,6 +167,29 @@ BEGIN
 		wait until rising_edge(sys_clk_80m);
 		
 		pm_data_store_en	<= '1';
+		wait for 10 ms;
+		chopper_ctrl	<= '1';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '0';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '1';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '0';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '1';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '0';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '1';
+		
+		wait for 10 ms;
+		chopper_ctrl	<= '0';
 
 		pm_steady_test	<= '1';
 		wait for 100 ns ;

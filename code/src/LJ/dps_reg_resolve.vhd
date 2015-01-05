@@ -40,6 +40,7 @@ generic(
 	   sys_clk_80M	:	in	std_logic;--system clock,80MHz
 		sys_rst_n	:	in	std_logic;--system reset,low active
 		
+		test_signal_delay : out std_logic;
 		scan_data_store_en: out std_logic;
 		rnd_data_store_en	: out std_logic;
 		pm_data_store_en	: out std_logic;
@@ -169,6 +170,7 @@ begin
 		pm_data_store_en	<= '0';
 		rnd_data_store_en	<= '0';
 		scan_data_store_en<= '0';
+		test_signal_delay<= '0';
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"00" and cpldif_dps_wr_en = '1') then--CONTROL REG
 			rnd_ctrl_reg	<= cpldif_dps_wr_data;
@@ -177,6 +179,16 @@ begin
 			else
 				if( cpldif_dps_wr_data(7 downto 0) = x"C3" ) then--exp running
 					test_rnd	<= '0';
+				else
+					null;
+				end if;
+			end if;
+			
+			if( cpldif_dps_wr_data(7 downto 0) = x"20" ) then--exp running
+				test_signal_delay	<= '1';
+			else
+				if( cpldif_dps_wr_data(7 downto 0) = x"02" ) then--exp running
+					test_signal_delay	<= '0';
 				else
 					null;
 				end if;
@@ -214,7 +226,7 @@ begin
 	if(sys_rst_n = '0') then
 		DPS_round_cnt_reg				<=	x"61A7";
 		DPS_chopper_cnt_reg			<=	(others => '0');
-		DPS_syn_dly_cnt_reg			<=	(others => '0');
+		DPS_syn_dly_cnt_reg			<=	x"020";
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"01"  and cpldif_dps_wr_en = '1') then--DPS_round_cnt REG
 			DPS_round_cnt_reg		<= cpldif_dps_wr_data(15 downto 0);
@@ -231,7 +243,7 @@ DPS_syn_dly_cnt	<= DPS_syn_dly_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		delay_AM1_reg			<=	(others => '0');
+		delay_AM1_reg			<=	x"60000000";--default pm is 0110
 --		delay_AM2_reg			<=	"01111";
 --		delay_PM_reg			<=	"01111";
 	elsif rising_edge(sys_clk_80M) then
@@ -264,7 +276,7 @@ end process;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		GPS_period_cnt_reg			<=	x"84C4B400";
+		GPS_period_cnt_reg			<=	x"04C4B400";
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"03" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			GPS_period_cnt_reg	<= cpldif_dps_wr_data;
@@ -276,7 +288,7 @@ GPS_period_cnt	<= GPS_period_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		DPS_send_PM_dly_cnt_reg			<=	x"00";
+		DPS_send_PM_dly_cnt_reg			<=	x"20";
 		DPS_send_AM_dly_cnt_reg			<=	x"00";
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"04" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
@@ -292,7 +304,7 @@ DPS_send_AM_dly_cnt	<= DPS_send_AM_dly_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		set_send_enable_cnt_reg			<=	x"016E3600";--
+		set_send_enable_cnt_reg			<=	x"00F42400";--
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"05" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			set_send_enable_cnt_reg	<= cpldif_dps_wr_data;
@@ -304,7 +316,7 @@ set_send_enable_cnt	<= set_send_enable_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		set_send_disable_cnt_reg			<=	x"007A1200";
+		set_send_disable_cnt_reg			<=	x"00000100";
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"06" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			set_send_disable_cnt_reg	<= cpldif_dps_wr_data;

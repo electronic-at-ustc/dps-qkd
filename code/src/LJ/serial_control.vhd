@@ -49,6 +49,7 @@ port(
 		serial_out_clk					: in std_logic;--6 times as serial_fifo_rd_clk
 		
 		delay_load				: in std_logic;--load delay value enable
+		test_signal_delay				: in std_logic;--load delay value enable
 		
 		serial_fifo_wr_en				:  in std_logic;--fifo write enable
 		serial_fifo_wr_data			:  in std_logic_vector(BURST_LEN*DATA_WIDTH-1 downto 0);--fifo write data
@@ -154,6 +155,7 @@ signal 	wr_en_2			: 	std_logic;
 signal 	rd_en2			: 	std_logic;
 signal 	dout2			: 	std_logic_VECTOR(1 downto 0);
 
+signal 	test_signal_delay_reg	: 	std_logic;
 signal 	fifo_2_rdy_wr_clk	: 	std_logic;
 signal 	fifo_2_rdy_rd_clk	: 	std_logic;
 signal 	AM1_clk	: 	std_logic;
@@ -374,19 +376,20 @@ end generate;
 		end if;
 	end process;
 	
-process (valid2,dout2,delay_AM1)
+process (valid2,dout2,delay_AM1,test_signal_delay_reg)
 	begin  
-		if(valid2 = '1') then
-			serial_in_reg(0)	<= dout2(1) & dout2(1) & dout2(0) & dout2(0);--"0" & dout2(3) & "0" & dout2(0);
---			serial_in_reg(1)	<= x"5";--(3) & dout2(3) & dout2(0) & dout2(0);
---			serial_in_reg(2)	<= dout2(1) & dout2(1) & dout2(0) & dout2(0);
---			serial_in_reg(0)	<= dout2;
---			serial_in_reg(1)	<= dout2;
---			serial_in_reg(2)	<= dout2(1) & dout2(1) & dout2(0) & dout2(0);
+		if(test_signal_delay_reg = '1') then
+			if(valid2 = '1') then
+				serial_in_reg(0)	<= x"0";--"0" & dout2(3) & "0" & dout2(0);
+			else
+				serial_in_reg(0)	<= x"F";
+			end if;
 		else
-			serial_in_reg(0)	<= delay_AM1(31 downto 28);
---			serial_in_reg(1)	<= delay_AM1(31 downto 28);
---			serial_in_reg(2)	<= delay_AM1(31 downto 28);
+			if(valid2 = '1') then
+				serial_in_reg(0)	<= dout2(1) & dout2(1) & dout2(0) & dout2(0);--"0" & dout2(3) & "0" & dout2(0);
+			else
+				serial_in_reg(0)	<= delay_AM1(31 downto 28);
+			end if;
 		end if;
 	end process;
 	--generate fifo read enable
@@ -399,8 +402,10 @@ process (valid2,dout2,delay_AM1)
 	begin  
 		if sys_rst_n = '0' then
 			rd_en2	<= '0';
+			test_signal_delay_reg	<= '0';
 		elsif (serial_fifo_rd_clk'event and serial_fifo_rd_clk = '1') then
 			rd_en2 <= send_en;
+			test_signal_delay_reg	<= test_signal_delay;
 		end if;
 	end process;
 	

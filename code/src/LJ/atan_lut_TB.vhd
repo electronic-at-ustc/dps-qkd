@@ -58,6 +58,7 @@ ARCHITECTURE behavior OF atan_lut_TB IS
          chnl_cnt_reg7_out : IN  std_logic_vector(9 downto 0);
          lut_ram_rd_addr : OUT  std_logic_vector(9 downto 0);
          lut_ram_rd_data : IN  std_logic_vector(15 downto 0);
+			tan_adj_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
 --         lut_ram_128_addr_wr : IN  std_logic_vector(6 downto 0);
          lut_ram_128_addr : IN  std_logic_vector(6 downto 0);
          lut_ram_128_data : OUT  std_logic_vector(11 downto 0);
@@ -87,6 +88,8 @@ ARCHITECTURE behavior OF atan_lut_TB IS
    signal sys_clk : std_logic := '0';
    signal sys_rst : std_logic := '1';
    signal start : std_logic := '0';
+   signal temp : std_logic_vector(9 downto 0) := (others => '0');
+   signal tan_adj_voltage : std_logic_vector(11 downto 0) := (others => '0');
    signal offset_voltage : std_logic_vector(11 downto 0) := (others => '0');
    signal half_wave_voltage : std_logic_vector(11 downto 0) := (others => '0');
    signal chnl_cnt_reg0_out : std_logic_vector(9 downto 0) := (others => '0');
@@ -122,6 +125,7 @@ BEGIN
           sys_rst => sys_rst,
           start => start,
           addr_reset => addr_reset,
+			 tan_adj_voltage => 	tan_adj_voltage,
           offset_voltage => offset_voltage,
           half_wave_voltage => half_wave_voltage,
           chnl_cnt_reg0_out => chnl_cnt_reg0_out,
@@ -180,13 +184,13 @@ BEGIN
 --		lut_ram_128_addr_wr		<= lut_ram_128_addr_wr + 1;
 		lut_ram_128_addr		<= lut_ram_128_addr + 1;
 		chnl_cnt_reg0_out		<= chnl_cnt_reg0_out + 121;
-		chnl_cnt_reg1_out		<= chnl_cnt_reg1_out + 221;
+		chnl_cnt_reg1_out		<= temp+218;--chnl_cnt_reg1_out + 221;
 		chnl_cnt_reg2_out		<= chnl_cnt_reg2_out + 171;
-		chnl_cnt_reg3_out		<= chnl_cnt_reg3_out + 321;
+		chnl_cnt_reg3_out		<= temp+425;--chnl_cnt_reg3_out + 321;
 		chnl_cnt_reg4_out		<= chnl_cnt_reg4_out + 521;
-		chnl_cnt_reg5_out		<= chnl_cnt_reg5_out + 421;
+		chnl_cnt_reg5_out		<= temp+523;--chnl_cnt_reg5_out + 421;
 		chnl_cnt_reg6_out		<= chnl_cnt_reg6_out + 621;
-		chnl_cnt_reg7_out		<= chnl_cnt_reg7_out + 921;
+		chnl_cnt_reg7_out		<= temp+343;--chnl_cnt_reg7_out + 921;
 		wait for 2 us;
    end process;
 	
@@ -198,7 +202,9 @@ BEGIN
       -- hold reset state for 100 ns.
       wait for 100 ns;	
 		sys_rst	<= '0';
-		half_wave_voltage	<= x"258";
+		half_wave_voltage	<= x"385";
+		offset_voltage		<= x"BD7";
+--		tan_adj_voltage	<= x"265";
       wait for sys_clk_period*10;
 		wait for 2ms;
 		use_8apd	<= '1';

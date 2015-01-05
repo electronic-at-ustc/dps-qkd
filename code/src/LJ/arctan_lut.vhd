@@ -394,8 +394,12 @@ end process;
 			tan_x_quotient_sub1	<= (others => '0');
 		elsif sys_clk'event and sys_clk = '1' then 
 				if(cnt = 249 and tan_x_large_1 = '1') then--select dividor
-					tan_x_quotient_add1	<= tan_x_quotient + 1;
-					tan_x_quotient_sub1	<= tan_x_quotient - 1;
+					if(quotient /= 1023) then
+						tan_x_quotient_add1	<= quotient(9 downto 0) + 1;
+					else
+						tan_x_quotient_add1	<= quotient(9 downto 0);
+					end if;
+					tan_x_quotient_sub1	<= quotient(9 downto 0) - 1;
 				end if;
 		end if;
 	end process;
@@ -422,7 +426,7 @@ end process;
 					
 					dividend	<= "0000000000" & sin_x; --为什么是20位位宽
 					diviSor		<= "0000000000" & cos_x;
-				elsif(cnt = 250) then--select dividor
+				elsif(cnt = 251) then--select dividor
 						dividend	<= tan_x_quotient_sub1 & tan_x_fractional; ----整数 部分10位 小数部分 10位
 						diviSor		<= tan_x_quotient_add1 & tan_x_fractional;
 				else
@@ -442,7 +446,11 @@ end process;
 					if(tan_x_large_1 = '1') then--tan x is 45 + alpha
 						final_fractional	<= fractional;
 					else--tan x is alpha
-						final_fractional	<= tan_x_fractional;
+						if(tan_x_quotient = 1 and tan_x_fractional = 0) then
+							final_fractional	<= (others => '1');
+						else
+							final_fractional	<= tan_x_fractional;
+						end if;
 					end if;
 				end if;
 		end if;
@@ -472,8 +480,21 @@ end process;
 			if(tan_x_large_1 = '0') then
 				temp_result_reg <="000" & artan_pitov(8 downto 0);--(0,1/4 PI)
 			else
-				temp_result_reg <=tan_adj_voltage + artan_pitov(8 downto 0);--(1/4,2/4)PI
+				temp_result_reg <="001" & artan_pitov(8 downto 0);--(1/4,2/4)PI
 			end if;
+--			if(sign_of_cos = '0') then
+--				if(tan_x_large_1 = '0') then
+--					temp_result_reg <="010" & artan_pitov(8 downto 0);--(0,1/4 PI)
+--				else
+--					temp_result_reg <="011" & artan_pitov(8 downto 0);--(1/4,2/4)PI
+--				end if;
+--			else
+--				if(tan_x_large_1 = '0') then
+--					temp_result_reg <="000" & artan_pitov(8 downto 0);--(0,1/4 PI)
+--				else
+--					temp_result_reg <="001" & artan_pitov(8 downto 0);--(1/4,2/4)PI
+--				end if;
+--			end if;
 --			case (dac_ft) is--
 --				when"10" => temp_result_reg <= X"000" + artan_pitov(8 downto 0); --(0,1/4 PI)
 --				when"11" => temp_result_reg <= X"192" + artan_pitov(8 downto 0); --(1/4,2/4)PI
@@ -552,16 +573,20 @@ end process;
 		if(sys_rst = '1') then
 			DAC_set_result_reg   	<= (others => '0');
 		elsif sys_clk'event and sys_clk = '1' then 
---			if(sign_of_sin = '0') then--when sin x is + output voltage is -
---				DAC_set_result_reg <='1' & one_of_two_voltage(10 downto 0);
+--			if(sign_of_sin = '1') then--when sin_x >= 0
+--				DAC_set_result_reg <= x"800" - one_of_two_voltage(10 downto 1); 
 --			else
---				DAC_set_result_reg <=x"800" - one_of_two_voltage(10 downto 0);
+--				DAC_set_result_reg <= x"800" + one_of_two_voltage(10 downto 1);
 --			end if;
 			case dac_ft is
-				when"11" => DAC_set_result_reg <=x"800" - one_of_two_voltage(10 downto 0); --(-1V/2, 0)
-				when"10" => DAC_set_result_reg <=x"800" - half_wave_voltage(11 downto 1) - one_of_two_voltage(10 downto 0); --(-2V/2,-1V/2)
-				when"00" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 1) + one_of_two_voltage(10 downto 0); --(-3V/2,-2V/2)
-				when"01" => DAC_set_result_reg <=x"800" + one_of_two_voltage(10 downto 0); --(-4V/2,-3V/2)				 
+				--sin x > 0 cos_x > 0
+				when"11" => DAC_set_result_reg <=x"800" - one_of_two_voltage(10 downto 1); --(-1V/2, 0)
+				--sin x > 0 cos_x < 0
+				when"10" => DAC_set_result_reg <=x"800" - half_wave_voltage(11 downto 0) + one_of_two_voltage(10 downto 1); --(-2V/2,-1V/2)
+				--sin x < 0 cos_x < 0
+				when"00" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 0) - one_of_two_voltage(10 downto 1); --(-3V/2,-2V/2)
+				--sin x < 0 cos_x > 0
+				when"01" => DAC_set_result_reg <=x"800" + one_of_two_voltage(10 downto 1); --(-4V/2,-3V/2)				 
 --				
 --				when"010" => DAC_set_result_reg <=x"800" + one_of_two_voltage(10 downto 1); --(1V/2, 0)
 --				when"011" => DAC_set_result_reg <=x"800" + half_wave_voltage(11 downto 2) + one_of_two_voltage(10 downto 1); --(1V/2,2V/2)

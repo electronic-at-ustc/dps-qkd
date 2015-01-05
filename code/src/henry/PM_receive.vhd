@@ -186,6 +186,8 @@ architecture Behavioral of PM_receive      is
 		
 --		pm_data_store_en : in std_logic;
 --		scan_data_store_en : in std_logic;
+		offset_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
+		half_wave_voltage	: in std_logic_vector(11 downto 0);--half_wave_voltage
 		result_ok : in std_logic;
 		DAC_set_addr   : in std_logic_vector(6 downto 0);
 		DAC_set_result : in std_logic_vector(11 downto 0);
@@ -306,6 +308,8 @@ begin
 		sys_rst_n => sys_rst_n,
 		apd_fpga_hit => apd_fpga_hit,
 		dac_finish => dac_finish,
+		offset_voltage =>offset_voltage,
+		half_wave_voltage =>half_wave_voltage,
 		chnl_cnt_reg0_out => chnl_cnt_reg0_out,
 		chnl_cnt_reg1_out => chnl_cnt_reg1_out ,
 		chnl_cnt_reg2_out => chnl_cnt_reg2_out,

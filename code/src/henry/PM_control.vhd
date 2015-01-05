@@ -111,6 +111,8 @@ signal config_reg0 : std_logic_vector(11 downto 0);
 signal config_reg1 : std_logic_vector(11 downto 0);
 signal config_reg2 : std_logic_vector(11 downto 0);
 signal config_reg3 : std_logic_vector(11 downto 0);
+signal half_wave_voltage_reg : std_logic_vector(11 downto 0);
+signal offset_voltage_reg : std_logic_vector(11 downto 0);
 signal scan_dac_data : std_logic_vector(11 downto 0);
 
 signal scan_inc_cnt_reg	: std_logic_vector(7 downto 0);
@@ -168,36 +170,42 @@ scan_data_store_en_rising  	<=  (not scan_data_store_en_1d) and scan_data_store_
 --		reg_wr_data		: in std_logic_vector(15 downto 0);
 
 ------128 times stable no change  latch------------
+half_wave_voltage	<= half_wave_voltage_reg;
+offset_voltage	<= offset_voltage_reg;
 config_reg_wr : process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		config_reg0<=	x"4CC"; --:-2V          ---确认 config_reg0的位数
-		config_reg1<=	x"800"; --:0V
-		config_reg2<=	x"B32"; --:2V
-		config_reg3<=	x"E65"; --:4V
+		config_reg0<=	x"4B8"; --:-2.05V          ---确认 config_reg0的位数
+		config_reg1<=	x"333"; --:-1.5V
+		config_reg2<=	x"4F5"; --:-0.95V
+		config_reg3<=	x"6B8"; --:-0.4V
 		count_time_reg<=	X"1388";--1ms/4 1388
-		pm_stable_cnt_reg<=	x"0032";--10us
+		pm_stable_cnt_reg<=	x"00A7";--30us
 		poc_stable_cnt_reg<=	x"00A7";--30us  A7
 		scan_inc_cnt_reg <=	x"1F";--30us  A7
-		offset_voltage<=	x"E3D";--  -1.95 V
-		half_wave_voltage<=	x"63D";--1.95 V
+		offset_voltage_reg<=	x"BD7";--  -1.5V
+		half_wave_voltage_reg<=	x"385";--1.1V
 		tan_adj_voltage<=	x"265";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
 	elsif rising_edge(sys_clk_80M) then		
+		config_reg3	  <= ('1' & half_wave_voltage_reg(10 downto 0)) - offset_voltage_reg(10 downto 0);
+		config_reg2	  <= config_reg3 - half_wave_voltage_reg(11 downto 1);
+		config_reg1	  <= config_reg2 - half_wave_voltage_reg(11 downto 1);
+		config_reg0	  <= config_reg1 - half_wave_voltage_reg(11 downto 1);
 		if(reg_wr = '1') then
-			if(reg_wr_addr = 0)then
-				config_reg0<=	reg_wr_data(11 downto 0); ----确认 16 或者 12位
-			end if;
-			if(reg_wr_addr = 1)then
-				config_reg1<=	reg_wr_data(11 downto 0);
-			end if;
-			if(reg_wr_addr = 2)then
-				config_reg2<=	reg_wr_data(11 downto 0);
-			end if;
-			if(reg_wr_addr = 3)then
-				config_reg3<=	reg_wr_data(11 downto 0);
-			end if;
+--			if(reg_wr_addr = 0)then
+--				config_reg0<=	reg_wr_data(11 downto 0); ----确认 16 或者 12位
+--			end if;
+--			if(reg_wr_addr = 1)then
+--				config_reg1<=	reg_wr_data(11 downto 0);
+--			end if;
+--			if(reg_wr_addr = 2)then
+--				config_reg2<=	reg_wr_data(11 downto 0);
+--			end if;
+--			if(reg_wr_addr = 3)then
+--				config_reg3<=	reg_wr_data(11 downto 0);
+--			end if;
 			if(reg_wr_addr = 4)then
 				count_time_reg<=	reg_wr_data(15 downto 0);
 			end if;
@@ -216,10 +224,10 @@ begin
 --				use_8apd<=	'0';--reg_wr_data(15 downto 0);
 			end if;
 			if(reg_wr_addr = 9)then
-				offset_voltage<=	reg_wr_data(11 downto 0);
+				offset_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 10)then
-				half_wave_voltage<=	reg_wr_data(11 downto 0);
+				half_wave_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 11)then
 				tan_adj_voltage <=	reg_wr_data(11 downto 0);
@@ -240,7 +248,7 @@ end process;
 			if(chopper_ctrl_rising = '1' and pm_data_store_en = '1') then
 				poc_count	<= x"7F";
 			elsif(pm_steady_test_rising = '1') then
-				poc_count	<= x"0F";
+				poc_count	<= x"7F";
 			elsif(set_onetime_end = '1' and poc_count > 0) then
 				poc_count 	<= poc_count - '1'; 
 			else

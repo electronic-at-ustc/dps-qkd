@@ -103,6 +103,7 @@ architecture Behavioral of DPS_control is
 	signal send_enable 				: std_logic;
 	signal send_en_AM_reg 			: std_logic;
 	signal send_en_PM_reg 			: std_logic;
+	signal pm_steady_enable			: std_logic;
 	
 	signal DPS_round_cnt_reg	: std_logic_vector(15 downto 0);
 	
@@ -117,7 +118,7 @@ architecture Behavioral of DPS_control is
 	
 	
 begin
-	PPG_start	<= '0';
+	PPG_start	<= send_enable;
 --generate gps pulse rise pulse
   process(sys_clk_80M, sys_rst_n) 
   begin 
@@ -193,6 +194,7 @@ begin
   begin 
 		if(sys_rst_n = '0') then
 			send_enable	<= '0'; 
+			pm_steady_enable	<= '0'; 
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 			if(exp_running = '1') then
 				if(chopper_ctrl_reg = '0' and gps_count32 = set_send_enable_cnt and chopper_ctrl_cnt = 0) then
@@ -205,18 +207,18 @@ begin
 					end if;
 				end if;
 				
-				if(gps_count32 = set_send_enable_cnt and chopper_ctrl_reg = '1' and chopper_ctrl_cnt = 0) then
-					chopper_ctrl_80M		<= not Alice_H_Bob_L;---Alice do not need this signal
+				if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl_reg = '1' and chopper_ctrl_cnt = 0) then
+					pm_steady_enable		<= not Alice_H_Bob_L;---Alice do not need this signal
 				else
-					if(gps_count32 = set_send_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
-						chopper_ctrl_80M		<= '0';
+					if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
+						pm_steady_enable		<= '0';
 					else
 						null;
 					end if;
 				end if;
 			else
 				send_enable			<= '0'; 
-				chopper_ctrl_80M	<= '0';
+				pm_steady_enable	<= '0';
 			end if;
 		end if;
   end process;
@@ -245,24 +247,40 @@ begin
 --			end if;
 --		end if;
 --  end process;
+--  chopper_ctrl	<= chopper_ctrl;
+	chopper_ctrl_80m <= pm_steady_enable;
   process(sys_clk_80M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
 			chopper_ctrl		<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
-				if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl_reg = '1' and chopper_ctrl_cnt = 0) then
-					chopper_ctrl		<= exp_running;---Alice do not need this signal
+				if(Alice_H_Bob_L = '1') then
+					chopper_ctrl		<= chopper_ctrl_reg;---Alice do not need this signal
 				else
-					if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
-						chopper_ctrl		<= '0';
-					else
-						null;
-					end if;
+					chopper_ctrl		<= pm_steady_enable;
 				end if;
 			end if;
 		end if;
   end process;
+--  process(sys_clk_80M, sys_rst_n) 
+--  begin 
+--		if(sys_rst_n = '0') then
+--			chopper_ctrl		<= '0';
+--		else
+--			if(sys_clk_80M'event and sys_clk_80M = '1') then
+--				if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl = '1' and chopper_ctrl_cnt = 0) then
+--					chopper_ctrl		<= exp_running;---Alice do not need this signal
+--				else
+--					if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
+--						chopper_ctrl		<= '0';
+--					else
+--						null;
+--					end if;
+--				end if;
+--			end if;
+--		end if;
+--  end process;
   ---generate internal gps pulse 
   process (sys_clk_80M)
 	begin  
@@ -391,7 +409,7 @@ begin
 				DPS_round_cnt_AM		<= DPS_round_cnt_reg - DPS_send_AM_dly_cnt_reg;
 				DPS_round_cnt_PM		<= DPS_round_cnt_reg - DPS_send_PM_dly_cnt_reg;
 				
-				DPS_round_cnt_AM_sub64	<= DPS_round_cnt_AM - 64;
+				DPS_round_cnt_AM_sub64	<= DPS_round_cnt_AM - 128;
 				DPS_round_cnt_PM_sub64	<= DPS_round_cnt_PM - 64;--total is 128 pulse one clock cycle is 2 pulse 
 			end if;
 		end if;

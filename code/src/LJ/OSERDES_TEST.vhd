@@ -188,6 +188,7 @@ COMPONENT clock_manage
 --		sys_clk_100M : IN std_logic;
 		sys_rst_n : IN std_logic;
 		fifo_clr : IN std_logic;
+		test_signal_delay : IN std_logic;
 		serial_fifo_wr_clk : IN std_logic;
 		serial_fifo_rd_clk : IN std_logic;
 		serial_out_clk : IN std_logic;
@@ -226,6 +227,7 @@ COMPONENT clock_manage
 		cpldif_dps_wr_data : IN std_logic_vector(31 downto 0);          
 		Alice_H_Bob_L : OUT std_logic;
 --		exp_stopping : OUT std_logic;
+		test_signal_delay: out std_logic;
 		scan_data_store_en: out std_logic;
 		rnd_data_store_en	: out std_logic;
 		pm_data_store_en	: out std_logic;
@@ -395,6 +397,10 @@ signal		dac_test_en 			: std_logic;
 signal		pm_dac_en 			: std_logic;
 signal		pm_dac_data		 	: std_logic_vector(11 downto 0);
 
+
+signal SERIAL_OUT_p_reg		:	std_logic_vector(2 downto 0);--serial output
+signal SERIAL_OUT_n_reg		:	std_logic_vector(2 downto 0);--serial output
+
 signal		scan_data_store_en: std_logic;
 signal		rnd_data_store_en	: std_logic;
 signal		pm_data_store_en	: std_logic;
@@ -403,6 +409,7 @@ signal		dac_ena 			: std_logic;
 signal		dac_data		 	: std_logic_vector(15 downto 0);
 
 signal pm_steady_test 		: std_logic;--80M clock domain
+signal test_signal_delay 		: std_logic;--80M clock domain
 
 signal		lut_ram_128_addr : std_logic_vector(6 downto 0);
 signal		lut_ram_128_data : std_logic_vector(11 downto 0);
@@ -441,6 +448,9 @@ signal		random_fifo_rd_data 	: std_logic_vector(DATA_WIDTH*BURST_LEN-1 downto 0)
 signal		serial_fifo_wr_en 	:  std_logic;
 signal		serial_fifo_wr_data 	:  std_logic_vector(DATA_WIDTH*BURST_LEN-1 downto 0);
 signal		random_fifo_rd_en 	:  std_logic;
+signal		send_enable 	:  std_logic;
+signal		temp_out_p 	:  std_logic;
+signal		temp_out_n 	:  std_logic;
 
 -- COMP_TAG_END ------ End COMPONENT Declaration ------------
 --	signal	exp_running 		: std_logic;
@@ -560,6 +570,7 @@ PORT MAP(
 		send_en_AM => send_en_AM,
 		delay_load => delay_load,
 		serial_fifo_rdy => serial_fifo_rdy,
+		test_signal_delay => test_signal_delay,
 		delay_AM1 => delay_AM1,
 --		delay_AM2 => delay_AM2,
 --		delay_PM => delay_PM,
@@ -568,8 +579,8 @@ PORT MAP(
 --		delay_PM_out => delay_PM_out,
 		send_en_AM_p => send_en_AM_p,
 		send_en_AM_n => send_en_AM_n,
-		SERIAL_OUT_p => SERIAL_OUT_p,
-		SERIAL_OUT_n => SERIAL_OUT_n
+		SERIAL_OUT_p => SERIAL_OUT_p_reg,
+		SERIAL_OUT_n => SERIAL_OUT_n_reg
 	);
 	
 	Inst_dps_reg_resolve: dps_reg_resolve 
@@ -595,6 +606,7 @@ PORT MAP(
 		rnd_data_store_en => rnd_data_store_en,
 		pm_data_store_en => pm_data_store_en,
 		tdc_data_store_en => tdc_data_store_en,
+		test_signal_delay => test_signal_delay,
 --		delay_PM => delay_PM,
 		delay_AM1_out => delay_AM1_out,
 --		delay_AM2_out => delay_AM2_out,
@@ -639,7 +651,7 @@ PORT MAP(
 		set_send_enable_cnt		=> set_send_enable_cnt,
 		set_chopper_enable_cnt	=> set_chopper_enable_cnt,
 		set_chopper_disable_cnt	=> set_chopper_disable_cnt,
-		PPG_start => open,
+		PPG_start => send_enable,
 		syn_light => syn_light,
 		chopper_ctrl => chopper_ctrl,
 		chopper_ctrl_80M => chopper_ctrl_sig,
@@ -726,6 +738,15 @@ PORT MAP(
 		 addrb 	=> lut_rd_addr,
 		 doutb 	=> lut_rd_data
 	  );
-
+	  
+	
+	SERIAL_OUT_p(0)	<= SERIAL_OUT_p_reg(0);
+	SERIAL_OUT_n(0)	<= SERIAL_OUT_n_reg(0);
+	
+	SERIAL_OUT_p(1)	<= send_enable;
+	SERIAL_OUT_n(1)	<= send_en_AM;
+	
+	SERIAL_OUT_p(2)	<= SERIAL_OUT_p_reg(2);
+	SERIAL_OUT_n(2)	<= SERIAL_OUT_n_reg(2);
 end Behavioral;
 

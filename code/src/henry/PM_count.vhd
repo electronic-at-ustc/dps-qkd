@@ -48,6 +48,8 @@ port(
 		---from dac-----------------------------------
 		dac_finish   :	in	std_logic;
 		---count out to alt
+		offset_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
+		half_wave_voltage	: in std_logic_vector(11 downto 0);--half_wave_voltage
 		
 		wait_start	 :	in 	std_logic;
 		wait_count 	 : in 	std_logic_vector(19 downto 0);
@@ -250,7 +252,7 @@ begin
 		else
 			if(result_ok = '1') then
 				alg_data_wr					<= '1';
-				alg_data_wr_data			<=	x"AAAAAAA" & "0" & DAC_set_addr & DAC_set_result;
+				alg_data_wr_data			<=	x"A" & half_wave_voltage & offset_voltage & "0" & DAC_set_addr & DAC_set_result;
 			else
 				alg_data_wr					<= '0';
 			end if;
