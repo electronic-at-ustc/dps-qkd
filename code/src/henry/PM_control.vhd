@@ -274,7 +274,7 @@ end process;
 			POC_ctrl_en <= '0';
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 				if(wait_start_reg = '1' and set_count = x"1") then
-					POC_ctrl <= poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
+					POC_ctrl <= 127-poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
 					POC_ctrl_en <= '1';
 				else
 --					POC_ctrl	<= POC_ctrl;
