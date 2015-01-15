@@ -599,6 +599,32 @@ begin
 end process;
 
 ----
+expe_stop_delay_cnt_pro: process(sys_clk,sys_rst)
+begin
+	if(sys_rst = '1')then
+		expe_stop_delay_cnt <= (others => '1');
+	elsif(sys_clk'event and sys_clk = '1')then
+		if(expe_sta_cmd = '1' and expe_sta_delay_gps = '0')then--rising edge of expe_sta_delay_gps
+			expe_stop_delay_cnt <= (others => '0');
+		elsif( expe_stop_delay_cnt <= x"F")then------delay 1ms by 80MHZ CLK
+			expe_stop_delay_cnt <= expe_stop_delay_cnt + '1';
+		end if;
+	end if;
+end process;
+
+tdc_fifo_clear_pro: process(sys_clk,sys_rst)
+begin
+	if(sys_rst = '1')then
+		tdc_fifo_clear <= '0';
+	elsif(sys_clk'event and sys_clk = '1')then
+		if((expe_stop_delay_cnt < x"A"))then
+			tdc_fifo_clear <= '1';
+		else
+			tdc_fifo_clear <= '0';
+		end if;
+	end if;
+end process;
+----
 
 expe_stop_proc : process(sys_clk,sys_rst)
 begin
@@ -628,31 +654,6 @@ begin
 	end if;
 end process;
 
-expe_stop_delay_cnt_pro: process(sys_clk,sys_rst)
-begin
-	if(sys_rst = '1')then
-		expe_stop_delay_cnt <= (others => '1');
-	elsif(sys_clk'event and sys_clk = '1')then
-		if(expe_stop = '1')then
-			expe_stop_delay_cnt <= (others => '0');
-		elsif( expe_stop_delay_cnt <= x"13880")then------delay 1ms by 80MHZ CLK
-			expe_stop_delay_cnt <= expe_stop_delay_cnt + '1';
-		end if;
-	end if;
-end process;
-
-tdc_fifo_clear_pro: process(sys_clk,sys_rst)
-begin
-	if(sys_rst = '1')then
-		tdc_fifo_clear <= '0';
-	elsif(sys_clk'event and sys_clk = '1')then
-		if((expe_stop_delay_cnt > x"1387a")and(expe_stop_delay_cnt < x"13880"))then
-			tdc_fifo_clear <= '1';
-		else
-			tdc_fifo_clear <= '0';
-		end if;
-	end if;
-end process;
 tdc_cpldif_fifo_clr <= tdc_fifo_clear or (not sys_rst_n);
 ---------------------------------end of register manager------------------------------------------------
 
@@ -1425,7 +1426,7 @@ tdc_frame_fifo_inst : tdc_frame_fifo-------64bit-->64bit
 --			end if;			  
 --		end if;		
 --	end process;
-	dps_data_mux_fifo_wr_en	<= tdc_fifo_wr_en or tdc_frame_fifo_rd_vld_d1 or (tdc_frame_fifo_rd_vld and tdc_data_store_en);
+	dps_data_mux_fifo_wr_en	<= tdc_fifo_wr_en or ((tdc_frame_fifo_rd_vld_d1 or tdc_frame_fifo_rd_vld) and tdc_data_store_en);
 	
 --  dps_WrEn_process:process(sys_clk,sys_rst)
 --  begin
