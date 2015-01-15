@@ -41,6 +41,7 @@ entity Rnd_Gen_TOP is
 		fifo_clr		:	in	std_logic;-------80MHz reset active low
 		
 		test_rnd:  in std_logic;--fifo read clock
+		test_rnd_data:  in std_logic_vector(15 downto 0);--fifo read clock
 		random_fifo_rd_clk:  in std_logic;--fifo read clock
 		
 		Rnd_Gen_WNG_Data	:	in	std_logic_vector(RND_CHIP_NUM - 1 downto 0 );    ---------20MHz 
@@ -171,7 +172,7 @@ begin
 	elsif(Sys_clk' event and Sys_clk = '1') then
 		if( rnd_gen_cnt_set = '1' and WNG_Clk_rising = '1') then
 			if(test_rnd = '1') then
-				fifo_din		<= x"12345678";--rnd_num_cnt;
+				fifo_din		<= test_rnd_data & test_rnd_data;--rnd_num_cnt;
 			else
 				fifo_din		<= rnd_data;
 			end if;

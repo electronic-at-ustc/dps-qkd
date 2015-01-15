@@ -54,6 +54,7 @@ port(
 		serial_fifo_wr_en				:  in std_logic;--fifo write enable
 		serial_fifo_wr_data			:  in std_logic_vector(BURST_LEN*DATA_WIDTH-1 downto 0);--fifo write data
 		
+		exp_running						:	in std_logic;--serial output enable
 		send_en							:	in std_logic;--serial output enable
 		send_en_AM						:	in std_logic;--serial output enable
 		delay_AM1						: in	std_logic_vector(31 downto 0);
@@ -376,7 +377,7 @@ end generate;
 		end if;
 	end process;
 	
-process (valid2,dout2,delay_AM1,test_signal_delay_reg)
+process (valid2,dout2,delay_AM1,test_signal_delay_reg,exp_running)
 	begin  
 		if(test_signal_delay_reg = '1') then
 			if(valid2 = '1') then
@@ -385,10 +386,14 @@ process (valid2,dout2,delay_AM1,test_signal_delay_reg)
 				serial_in_reg(0)	<= x"F";
 			end if;
 		else
-			if(valid2 = '1') then
-				serial_in_reg(0)	<= dout2(1) & dout2(1) & dout2(0) & dout2(0);--"0" & dout2(3) & "0" & dout2(0);
+			if(exp_running = '1') then
+				if(valid2 = '1') then
+					serial_in_reg(0)	<= dout2(0) & dout2(0) & dout2(1) & dout2(1);--"0" & dout2(3) & "0" & dout2(0);
+				else
+					serial_in_reg(0)	<= delay_AM1(31 downto 28);
+				end if;
 			else
-				serial_in_reg(0)	<= delay_AM1(31 downto 28);
+				serial_in_reg(0)	<= x"0";
 			end if;
 		end if;
 	end process;

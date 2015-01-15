@@ -133,6 +133,7 @@ COMPONENT clock_manage
 		sys_rst_n : IN std_logic;
 		fifo_clr : IN std_logic;
 		test_rnd				:  IN std_logic;--80M clock domain
+		test_rnd_data		:  IN std_logic_vector(15 downto 0);--80M clock domain
 		random_fifo_rd_clk : IN std_logic;
 		Rnd_Gen_WNG_Data : IN std_logic_vector(RND_CHIP_NUM-1 downto 0);
 		random_fifo_rd_en : IN std_logic;          
@@ -188,6 +189,7 @@ COMPONENT clock_manage
 --		sys_clk_100M : IN std_logic;
 		sys_rst_n : IN std_logic;
 		fifo_clr : IN std_logic;
+		exp_running						:	in std_logic;--serial output enable
 		test_signal_delay : IN std_logic;
 		serial_fifo_wr_clk : IN std_logic;
 		serial_fifo_rd_clk : IN std_logic;
@@ -236,6 +238,7 @@ COMPONENT clock_manage
 		poc_test_en 			: out	std_logic;	
 		dac_test_en 			: out	std_logic;
 		test_rnd				:  out std_logic;--80M clock domain
+		test_rnd_data		:  out std_logic_vector(15 downto 0);--80M clock domain
 		delay_load : OUT std_logic;
 		DPS_send_AM_dly_cnt : OUT std_logic_vector(7 downto 0);
 		DPS_send_PM_dly_cnt : OUT std_logic_vector(7 downto 0);
@@ -287,6 +290,7 @@ COMPONENT clock_manage
 	   set_chopper_disable_cnt		: in	std_logic_vector(31 downto 0);--for Bob
 	   GPS_pulse_int			:  out std_logic;--80M clock domain
 	   GPS_pulse_int_active	:  out std_logic;--80M clock domain
+		exp_running_250M :	OUT std_logic;
 		PPG_start :	OUT std_logic;
 		syn_light : OUT std_logic;
 		chopper_ctrl : OUT std_logic;
@@ -387,6 +391,7 @@ COMPONENT clock_manage
 --	signal sys_rst_n1 : std_logic;
 --	signal sys_rst_n3 : std_logic;
 --	signal sys_clk_80M : std_logic;
+	signal exp_running_250M : std_logic;
 	signal sys_clk_200M : std_logic;
 	signal sys_clk_500M : std_logic;
 --	signal sys_clk_100M : std_logic;
@@ -396,7 +401,7 @@ signal		poc_test_en 			: std_logic;
 signal		dac_test_en 			: std_logic;	
 signal		pm_dac_en 			: std_logic;
 signal		pm_dac_data		 	: std_logic_vector(11 downto 0);
-
+signal test_rnd_data		:   std_logic_vector(15 downto 0);--80M clock domain
 
 signal SERIAL_OUT_p_reg		:	std_logic_vector(2 downto 0);--serial output
 signal SERIAL_OUT_n_reg		:	std_logic_vector(2 downto 0);--serial output
@@ -512,6 +517,7 @@ PORT MAP(
 		sys_rst_n => sys_rst_n,
 		fifo_clr => dps_cpldif_fifo_clr,
 		test_rnd => test_rnd,
+		test_rnd_data => test_rnd_data,
 		random_fifo_rd_clk => sys_clk,
 		Rnd_Gen_WNG_Data => Rnd_Gen_WNG_Data,
 		Rnd_Gen_WNG_Clk => Rnd_Gen_WNG_Clk,
@@ -561,6 +567,7 @@ PORT MAP(
 --		sys_clk_100M => sys_clk_100M,
 		sys_clk_200M => sys_clk_200M,
 		fifo_clr => dps_cpldif_fifo_clr,
+		exp_running => exp_running_250M,--200M
 		serial_fifo_wr_clk => sys_clk,--200M
 		serial_fifo_rd_clk => sys_clk_250m,--167M 500M/3
 		serial_out_clk => sys_clk_500M,--500M
@@ -593,6 +600,7 @@ PORT MAP(
 		sys_rst_n => sys_rst_n,
 		Alice_H_Bob_L => Alice_H_Bob_L,
 		test_rnd => test_rnd,
+		test_rnd_data => test_rnd_data,
 		delay_load => delay_load,
 		DPS_chopper_cnt => DPS_chopper_cnt,
 		DPS_syn_dly_cnt => DPS_syn_dly_cnt,
@@ -636,7 +644,7 @@ PORT MAP(
 		sys_clk_250M => sys_clk_250m,
 		sys_rst_n => sys_rst_n,
 		exp_running => exp_running,
---		pm_steady_test => pm_steady_test,
+		exp_running_250M => exp_running_250M,
 		Alice_H_Bob_L => Alice_H_Bob_L,
 		gps_pulse => gps_pps,
 		GPS_period_cnt => GPS_period_cnt,
