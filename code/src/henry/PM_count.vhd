@@ -53,7 +53,7 @@ port(
 		
 		wait_start	 :	in 	std_logic;
 		wait_count 	 : in 	std_logic_vector(19 downto 0);
-		wait_dac_cnt : in 	std_logic_vector(2 downto 0);
+		wait_dac_cnt : in 	std_logic_vector(7 downto 0);
 		wait_finish	 :	out 	std_logic;
 		
 		chnl_cnt_reg0_out	: out std_logic_vector(9 downto 0);
@@ -75,6 +75,8 @@ port(
 		result_ok 		: in std_logic;
 		DAC_set_addr   : in std_logic_vector(6 downto 0);
 		DAC_set_result : in std_logic_vector(11 downto 0);
+		min_set_result_en : out std_logic;
+		min_set_result : out std_logic_vector(11 downto 0);
 		DAC_set_data 	: in std_logic_vector(11 downto 0)
 	);
 end PM_count;
@@ -93,7 +95,7 @@ signal wait_finish_reg		: std_logic;
 
 signal apd_fpga_hit_1d		: std_logic_vector(1 downto 0);
 signal apd_fpga_hit_2d		: std_logic_vector(1 downto 0); 
-signal hit_cnt_en		: std_logic_vector(1 downto 0); 
+signal hit_cnt_en				: std_logic_vector(1 downto 0); 
 
 signal 		chnl_cnt_reg0	:  std_logic_vector(9 downto 0);
 signal 		chnl_cnt_reg1	:  std_logic_vector(9 downto 0);
@@ -248,7 +250,7 @@ begin
 	elsif rising_edge(sys_clk_80M) then
 		if(wait_finish_reg = '1' and wait_dac_cnt /= 0) then ---10 counter
 			alg_data_wr					<= '1';
-			alg_data_wr_data			<=	x"F" & DAC_set_data & "0" & wait_dac_cnt & "00" & apd_cnt_reg(1) & "0" & wait_dac_cnt & "00" & apd_cnt_reg(0);
+			alg_data_wr_data			<=	x"F" & DAC_set_data & wait_dac_cnt & "00" & apd_cnt_reg(1) & "00" & apd_cnt_reg(0);
 		else
 			if(result_ok = '1') then
 				alg_data_wr					<= '1';
@@ -260,6 +262,26 @@ begin
 	end if;
 end process;
 
+process(sys_clk_80M,sys_rst_n)
+begin
+	if(sys_rst_n = '0') then
+		min_cnt				<= (others => '1');
+		min_dac				<= (others => '0');
+		min_set_result		<= (others => '0');
+		min_set_result_en	<= '0';
+	elsif rising_edge(sys_clk_80M) then
+		min_set_result_en	<= one_time_end;
+		if(wait_finish_reg = '1' and wait_dac_cnt /= 0) then ---10 counter
+			if(apd_cnt_reg(0) < min_cnt) then
+				min_cnt	<= apd_cnt_reg(0);
+				min_dac	<= dac_set_data;
+			end if;
+		elsif(one_time_end = '1') then
+			min_set_result	<= min_dac;
+			min_cnt			<= (others => '1');
+		end if;
+	end if;
+end process;
 
 end Behavioral;
 
