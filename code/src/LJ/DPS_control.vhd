@@ -55,6 +55,7 @@ entity DPS_control is
 	  set_chopper_enable_cnt: in	std_logic_vector(31 downto 0);--for Bob
 	  set_chopper_disable_cnt: in	std_logic_vector(31 downto 0);--for Bob
 	  
+	  exp_running_250M		:  out std_logic;--80M clock domain
 	  GPS_pulse_int			:  out std_logic;--80M clock domain
 	  GPS_pulse_int_active	:  out std_logic;--80M clock domain
 	  PPG_start					:  out std_logic;--250M clock domain
@@ -331,10 +332,14 @@ begin
   begin 
 		if(sys_rst_n = '0') then
 			syn_light_cnt		<= (others => '0');
+			exp_running_250M	<= '0';
+			send_enable_250M	<= '0';
+			exp_running_reg	<= '0';
 		else
 			if(sys_clk_250M'event and sys_clk_250M = '1') then
 				send_enable_250M		<= send_enable;
 				exp_running_reg		<= exp_running;
+				exp_running_250M		<= exp_running_reg;
 				if(exp_running_reg = '1' and send_enable_250M = '1') then
 					if(syn_light_cnt < DPS_round_cnt_reg) then
 						syn_light_cnt	<= syn_light_cnt + 1;
