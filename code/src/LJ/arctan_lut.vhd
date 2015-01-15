@@ -57,6 +57,8 @@ entity atan_lut is
 --		count3	: in std_logic_vector(9 downto 0); --纯小数
 --		count4	: in std_logic_vector(9 downto 0); --纯小数
 	-----128 lut?-------------------------------------	
+		min_set_result_en : in std_logic;
+		min_set_result : in std_logic_vector(11 downto 0);
 		--lut_wr_en: in std_logic; -- LUT查找表写使能 
 		lut_ram_rd_addr	: out std_logic_vector(9 downto 0); 
 		lut_ram_rd_data	: in std_logic_vector(15 downto 0); 
@@ -210,9 +212,9 @@ divider_10_inst : divider_10
 Inst_lut_ram_128 : lut_ram_128
   PORT MAP (
     clka 	=> sys_clk,
-    wea(0)		=> lut_ram_128_wen,
+    wea(0)		=> min_set_result_en,
     addra 	=> lut_ram_128_addra,
-    dina 	=> lut_ram_128_dina,
+    dina 	=> min_set_resul,
 --    douta	=> lut_ram_128_douta,
     clkb 	=> sys_clk,
 	 addrb 	=> lut_ram_128_addr,
@@ -275,9 +277,9 @@ end process;
 			lut_ram_128_addra	<= (others => '0');
 		else
 			if(lut_ram_128_wen = '1') then
-					lut_ram_128_addra	<= lut_ram_128_addra+1; --if（wen）
+				lut_ram_128_addra	<= lut_ram_128_addra+1; --if（wen）
 			else
-					lut_ram_128_addra  <= lut_ram_128_addra;
+				lut_ram_128_addra  <= lut_ram_128_addra;
 			end if;
 		end if;
 	end if;
