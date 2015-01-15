@@ -90,7 +90,7 @@ entity PM_control is
 --		alg_data_wr_data	: out	std_logic_vector(31 downto 0);
 		wait_start	 :	out 	std_logic;
 		wait_count 	 : out 	std_logic_vector(19 downto 0);
-		wait_dac_cnt : out 	std_logic_vector(2 downto 0);
+		wait_dac_cnt : out 	std_logic_vector(7 downto 0);
 		wait_finish	 :	in 	std_logic;
 		
 		-----
@@ -106,19 +106,23 @@ architecture Behavioral of PM_control is
 
 --signal pr_state,nx_state : state;
 signal poc_count   : std_logic_vector(7 downto 0);
-signal set_count   : std_logic_vector(3 downto 0);
+signal set_count   : std_logic_vector(7 downto 0);
 signal config_reg0 : std_logic_vector(11 downto 0);
 signal config_reg1 : std_logic_vector(11 downto 0);
 signal config_reg2 : std_logic_vector(11 downto 0);
 signal config_reg3 : std_logic_vector(11 downto 0);
 signal half_wave_voltage_reg : std_logic_vector(11 downto 0);
 signal offset_voltage_reg : std_logic_vector(11 downto 0);
+signal minus_voltage : std_logic_vector(7 downto 0);
+signal Dac_set_result_low : std_logic_vector(11 downto 0);
 signal scan_dac_data : std_logic_vector(11 downto 0);
 
+signal step_cnt_reg		: std_logic_vector(7 downto 0);
 signal scan_inc_cnt_reg	: std_logic_vector(7 downto 0);
 signal pm_stable_cnt_reg	: std_logic_vector(15 downto 0);
 signal poc_stable_cnt_reg 	: std_logic_vector(15 downto 0);
 signal count_time_reg 		: std_logic_vector(15 downto 0);
+signal step_cnt		 		: std_logic_vector(7 downto 0);
 --signal use_apd4            : std_logic_vector(1 downto 0);
 --signal use_apd8            : std_logic_vector(1 downto 0);
 --signal dac_start   : std_logic;
@@ -179,13 +183,14 @@ begin
 		config_reg1<=	x"333"; --:-1.5V
 		config_reg2<=	x"4F5"; --:-0.95V
 		config_reg3<=	x"6B8"; --:-0.4V
-		count_time_reg<=	X"1388";--1ms/4 1388
-		pm_stable_cnt_reg<=	x"00A7";--30us
-		poc_stable_cnt_reg<=	x"00A7";--30us  A7
-		scan_inc_cnt_reg <=	x"1F";--30us  A7
+		count_time_reg<=	X"01F4";--100us
+		pm_stable_cnt_reg<=	x"000F";--3us
+		poc_stable_cnt_reg<=	x"0005";--1us  A7
+		scan_inc_cnt_reg <=	x"1F";--
 		offset_voltage_reg<=	x"BD7";--  -1.5V
 		half_wave_voltage_reg<=	x"385";--1.1V
-		tan_adj_voltage<=	x"265";--
+		minus_voltage<=	x"A4";--
+		step_cnt_reg	<=	x"1B";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
 	elsif rising_edge(sys_clk_80M) then		
@@ -221,7 +226,7 @@ begin
 			end if;
 			if(reg_wr_addr = 8)then
 				scan_inc_cnt_reg<= reg_wr_data(7 downto 0);
---				use_8apd<=	'0';--reg_wr_data(15 downto 0);
+				step_cnt_reg	<=	(reg_wr_data(14 downto 0)&'0') + 11;
 			end if;
 			if(reg_wr_addr = 9)then
 				offset_voltage_reg<=	reg_wr_data(11 downto 0);
@@ -230,14 +235,14 @@ begin
 				half_wave_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 11)then
-				tan_adj_voltage <=	reg_wr_data(11 downto 0);
+				minus_voltage <=	reg_wr_data(11 downto 0);
 			end if;
 		else
 			null;
 		end if;
 	end if;
 end process;
-
+	tan_adj_voltage	<= x"000";
  ---------set 128 times ------------------------------
  --------- 结束时 是否 需要输出 信号---------------------
   process(sys_clk_80M, sys_rst_n, chopper_ctrl_rising) 
@@ -273,7 +278,7 @@ end process;
 			POC_ctrl	<= (others =>'0');
 			POC_ctrl_en <= '0';
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
-				if(wait_start_reg = '1' and set_count = x"1") then
+				if(wait_start_reg = '1' and set_count = x"01") then
 					POC_ctrl <= 127-poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
 					POC_ctrl_en <= '1';
 				else
@@ -352,31 +357,31 @@ end process;
 process(sys_clk_80M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
-			set_count	<= x"0";
+			set_count	<= x"00";
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 			if(pm_data_store_en = '1') then
 				if(chopper_ctrl_rising = '1' or pm_steady_test_rising = '1') then
-					set_count	<= x"1";
+					set_count	<= x"01";
 				elsif(complete = '1') then---all poc set is reached
-					set_count	<= x"0";
+					set_count	<= x"00";
 				elsif(set_count > 0) then
 					if(add_set_count = '1') then
-						if(set_count < 11) then
+						if(set_count < 12+step_cnt_reg) then
 							set_count	<= set_count + 1;
 						else
-							set_count	<= x"1";
+							set_count	<= x"01";
 						end if;
 					end if;
 				end if;
 			else
-				set_count	<= x"0";
+				set_count	<= x"00";
 			end if;
 		end if;
   end process;
   
   process(wait_finish, set_count) 
   begin 
-		if(wait_finish = '1' and set_count = 11) then
+		if(wait_finish = '1' and step_cnt = step_cnt_reg) then
 			set_onetime_end	<= '1';
 		else
 			set_onetime_end	<= '0';
@@ -390,29 +395,30 @@ begin
 		Dac_Data 	<= (others =>'0');
 		alt_begin	<= '0';
 		wait_count	<= x"13880";
-		wait_dac_cnt<= "000";
+		wait_dac_cnt<= x"00";
 	elsif rising_edge(sys_clk_80M) then
+		
 		if(set_count = 1) then
 			wait_count	<= poc_stable_cnt_reg & x"0";
-			wait_dac_cnt<= "000";
-		elsif(set_count = 2 or set_count = 4 or set_count = 6 or set_count = 8 or set_count = 10) then
+			wait_dac_cnt<= x"00";
+		elsif(set_count >0 and set_count(0) = '0') then
 			wait_count	<= pm_stable_cnt_reg & x"0";
-			wait_dac_cnt<= "000";
-		elsif(set_count = 3 or set_count = 5 or set_count = 7 or set_count = 9 or set_count = 11) then
+			wait_dac_cnt<= x"00";
+		elsif(set_count(0) = '1') then
 			wait_count	<= count_time_reg & x"0";
-			wait_dac_cnt<= set_count(3 downto 1);
+			wait_dac_cnt<= '0'&set_count(7 downto 1);
 		elsif(scan_data_store_en = '1') then
 			if(wait_stable_H_count_L = '1') then
 				wait_count	<= pm_stable_cnt_reg & x"0";
-				wait_dac_cnt<= "110";
+				wait_dac_cnt<= x"FF";
 			else
 				wait_count	<= count_time_reg & x"0";
-				wait_dac_cnt<= "000";
+				wait_dac_cnt<= x"00";
 			end if;
 		end if;
 		
 		if(wait_start_reg = '1') then
-			if(set_count = 2 or set_count = 4 or set_count = 6 or set_count = 8 or set_count = 10) then
+			if(set_count > 0 and set_count(0) = '0') then
 				Dac_Ena		<= '1';
 			elsif(scan_data_store_en = '1' and wait_stable_H_count_L	= '1') then
 				Dac_Ena		<= '1';
@@ -433,6 +439,8 @@ begin
 			Dac_Data	<= config_reg3;
 		elsif(set_count = 10) then
 			Dac_Data	<= Dac_set_result;
+		elsif(set_count > 10 and set_count(0) = '0') then
+			Dac_Data <= Dac_set_result_low;
 		elsif(scan_data_store_en = '1') then
 			Dac_Data	<= scan_dac_data;
 		end if;
@@ -444,6 +452,27 @@ begin
 		end if;
   end if;
 end process;
+
+process(sys_clk_80M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			Dac_set_result_low	<= (others =>'0');
+		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
+			if(set_count = 10) then
+				if(Dac_set_result > minus_voltage) then
+					Dac_set_result_low <= Dac_set_result - minus_voltage;
+				else
+					Dac_set_result_low  <= x"000";
+				end if;
+			else
+				if(wait_finish = '1' and set_count > 11 and set_count(0) = '1') then
+					Dac_set_result_low <= Dac_set_result_low + scan_inc_cnt_reg;
+				elsif(set_count < 10) then
+					Dac_set_result_low	<= (others =>'0');
+				end if;
+			end if;			
+		end if;
+  end process;
 
 process(sys_clk_80M, sys_rst_n) 
 begin
