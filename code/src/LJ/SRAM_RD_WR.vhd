@@ -75,13 +75,14 @@ architecture Behavioral of SRAM_RD_WR is
   signal random_fifo_rd_reg	  : std_logic;
   signal fifo_operate_permit	  : std_logic;
   signal PM_wr_en_reg1	  : std_logic;
-  signal PM_wr_en_reg2	  : std_logic;
+--  signal PM_wr_en_reg2	  : std_logic;
   	
-  signal dps_cpldif_fifo_wr_cnt		:	std_logic_vector(3 downto 0);
-  signal fifo_rd_cnt		:	std_logic_vector(3 downto 0);
-  signal data_reg1		:	std_logic_vector(31 downto 0);
-  signal data_reg2		:	std_logic_vector(31 downto 0);
-  signal PM_wr_data_reg	:	std_logic_vector(47 downto 0);
+--  signal fill_data		:	std_logic_vector(15 downto 0);
+  signal dps_cpldif_fifo_wr_cnt		:	std_logic_vector(7 downto 0);
+  signal fifo_rd_cnt		:	std_logic_vector(15 downto 0);
+--  signal data_reg1		:	std_logic_vector(31 downto 0);
+--  signal data_reg2		:	std_logic_vector(31 downto 0);
+--  signal PM_wr_data_reg	:	std_logic_vector(47 downto 0);
 begin
  
   ---generate random fifo read permit
@@ -105,7 +106,7 @@ begin
 		else
 			if(sys_clk'event and sys_clk = '1') then
 				if(fifo_operate_permit = '1') then
-					if(random_fifo_rd_reg = '0' and PM_wr_en = '0' and PM_wr_en_reg1 = '0' and PM_wr_en_reg2 = '0') then--read random fifo 
+					if(random_fifo_rd_reg = '0') then--read random fifo 
 						random_fifo_rd_reg	<= '1';
 					else
 						random_fifo_rd_reg	<= '0';
@@ -121,16 +122,17 @@ begin
   begin 
 		if(sys_rst_n = '0') then
 			PM_wr_en_reg1	<= '0';
-			PM_wr_en_reg2	<= '0';
+--			PM_wr_en_reg2	<= '0';
+--			fill_data	<= x"5555";
 		else
 			if(sys_clk'event and sys_clk = '1') then
-				PM_wr_en_reg1	<= PM_wr_en;
-				PM_wr_en_reg2	<= PM_wr_en_reg1;
-				if(PM_wr_en = '1') then
-					PM_wr_data_reg	<= PM_wr_data;
-				else
-					null;
-				end if;
+				PM_wr_en_reg1	<= PM_wr_en and random_fifo_vld;
+--				PM_wr_en_reg2	<= PM_wr_en_reg1;
+--				if(Alice_H_Bob_L = '1') then
+--					fill_data	<= x"5555";
+--				else
+--					fill_data	<= x"AAAA";
+--				end if;
 			end if;
 		end if;
   end process;
@@ -153,11 +155,11 @@ begin
   process(sys_clk, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
-			dps_cpldif_fifo_wr_cnt	<= x"0";
+			dps_cpldif_fifo_wr_cnt	<= x"00";
 		else
 			if(sys_clk'event and sys_clk = '1') then
 				if(fifo_clr = '1') then
-					dps_cpldif_fifo_wr_cnt	<= x"0";
+					dps_cpldif_fifo_wr_cnt	<= x"00";
 				else
 					if(dps_cpldif_fifo_wr_en_reg = '1' ) then
 						dps_cpldif_fifo_wr_cnt	<= dps_cpldif_fifo_wr_cnt + 1;
@@ -182,11 +184,11 @@ begin
 					fifo_rd_cnt	<= (others => '0');
 				else
 					if(random_fifo_rd_reg = '1') then
-						if(fifo_rd_cnt < 13) then
+--						if(fifo_rd_cnt < 13) then
 							fifo_rd_cnt	<= fifo_rd_cnt + 1;
-						else
-							fifo_rd_cnt	<= (others => '0');
-						end if;
+--						else
+--							fifo_rd_cnt	<= (others => '0');
+--						end if;
 					end if;
 				end if;
 			end if;
@@ -194,64 +196,24 @@ begin
   end process;
   
   --generate sram read request
-  process(sys_clk, sys_rst_n) 
+    process(sys_clk, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
-			data_reg1								<= (others => '0');
-			data_reg2								<= (others => '0');
 			dps_cpldif_fifo_wr_data	<= (others => '0');
 			dps_cpldif_fifo_wr_en_reg	<= '0';
 		else
 			if(sys_clk'event and sys_clk = '1') then
 				if(random_fifo_vld = '1' and rnd_data_store_en = '1') then
-				  case fifo_rd_cnt is
-				  when x"1" => data_reg1	<= random_fifo_rd_data; dps_cpldif_fifo_wr_en_reg	<= '0';
-				  when x"2" => data_reg2	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg1 & random_fifo_rd_data(31 downto 8);
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"3" => data_reg1	<= random_fifo_rd_data; dps_cpldif_fifo_wr_en_reg	<= '0';
-				  when x"4" => data_reg2	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg2(7 downto 0) & data_reg1 & random_fifo_rd_data(31 downto 16);
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"5" => data_reg1	<= random_fifo_rd_data; dps_cpldif_fifo_wr_en_reg	<= '0';
-				  when x"6" => data_reg2	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg2(15 downto 0) & data_reg1 & random_fifo_rd_data( 31 downto 24);
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"7" => data_reg1	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg2(23 downto 0)  &             random_fifo_rd_data(31 downto 0) ;
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"8" => data_reg2	<= random_fifo_rd_data; dps_cpldif_fifo_wr_en_reg	<= '0';
-				  when x"9" => data_reg1	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg2               &             random_fifo_rd_data(31 downto 8);
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"A" => data_reg2	<= random_fifo_rd_data; dps_cpldif_fifo_wr_en_reg	<= '0';
-				  when x"B" => data_reg1	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg1(7 downto 0) & data_reg2 & random_fifo_rd_data(31 downto 16);
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"C" => data_reg2	<= random_fifo_rd_data; dps_cpldif_fifo_wr_en_reg	<= '0';
-				  when x"D" => data_reg1	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg1(15 downto 0) & data_reg2 & random_fifo_rd_data(31  downto 24);
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when x"0" => data_reg2	<= random_fifo_rd_data;
-									dps_cpldif_fifo_wr_data	<= x"A" & dps_cpldif_fifo_wr_cnt & data_reg1(23 downto 0)  &             random_fifo_rd_data(31 downto 0) ;
-									dps_cpldif_fifo_wr_en_reg	<= '1';
-				  when others =>
-						data_reg1					<= (others => '0');
-						data_reg2					<= (others => '0');
-						dps_cpldif_fifo_wr_data	<= (others => '0');
-						dps_cpldif_fifo_wr_en_reg	<= '0';
-					end case;
+				  dps_cpldif_fifo_wr_data	   <= x"AA" & dps_cpldif_fifo_wr_cnt & fifo_rd_cnt & random_fifo_rd_data; 
+				  dps_cpldif_fifo_wr_en_reg	<= '1';
 				else
-					if(PM_wr_en_reg2 = '1') then
+					if(PM_wr_en_reg1 = '1' or PM_wr_en = '1' ) then
 						dps_cpldif_fifo_wr_en_reg	<= '1';
-						dps_cpldif_fifo_wr_data	<= x"B" & dps_cpldif_fifo_wr_cnt & x"00" & PM_wr_data_reg;
+						dps_cpldif_fifo_wr_data	<= x"BB" & dps_cpldif_fifo_wr_cnt & PM_wr_data;
 					else
 						dps_cpldif_fifo_wr_en_reg	<= '0';
 					end if;
-					data_reg1					<= data_reg1;
-					data_reg2					<= data_reg2;
---					dps_cpldif_fifo_wr_data	<= dps_cpldif_fifo_wr_data;			
-			  end if;
+				end if;
 			end if;
 		end if;
   end process;
