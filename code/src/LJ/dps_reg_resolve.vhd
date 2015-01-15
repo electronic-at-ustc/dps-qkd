@@ -49,6 +49,7 @@ generic(
 --		exp_running 		: OUT std_logic;
 --		exp_stopping 		: OUT std_logic;
 		test_rnd				:  out std_logic;--80M clock domain
+		test_rnd_data		:  out std_logic_vector(15 downto 0);--fifo read clock
 		delay_load	 		: OUT std_logic;
 		DPS_syn_dly_cnt	: out	std_logic_vector(11 downto 0);
 		DPS_send_PM_dly_cnt	: out	std_logic_vector(7 downto 0);
@@ -171,11 +172,13 @@ begin
 		rnd_data_store_en	<= '0';
 		scan_data_store_en<= '0';
 		test_signal_delay<= '0';
+		test_rnd_data<= (others => '0');
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"00" and cpldif_dps_wr_en = '1') then--CONTROL REG
 			rnd_ctrl_reg	<= cpldif_dps_wr_data;
 			if( cpldif_dps_wr_data(7 downto 0) = x"3C" ) then--exp running
-				test_rnd	<= '1';
+				test_rnd			<= '1';
+				test_rnd_data	<= cpldif_dps_wr_data(31 downto 16);
 			else
 				if( cpldif_dps_wr_data(7 downto 0) = x"C3" ) then--exp running
 					test_rnd	<= '0';
@@ -243,7 +246,7 @@ DPS_syn_dly_cnt	<= DPS_syn_dly_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		delay_AM1_reg			<=	x"60000000";--default pm is 0110
+		delay_AM1_reg			<=	x"C0000000";--default pm is 0110
 --		delay_AM2_reg			<=	"01111";
 --		delay_PM_reg			<=	"01111";
 	elsif rising_edge(sys_clk_80M) then
