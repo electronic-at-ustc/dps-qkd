@@ -88,6 +88,7 @@ entity PM_control is
 		---total is 128 x 6 time
 --		alg_data_wr			: out	std_logic;
 --		alg_data_wr_data	: out	std_logic_vector(31 downto 0);
+		one_time_end		: out std_logic;
 		wait_start	 :	out 	std_logic;
 		wait_count 	 : out 	std_logic_vector(19 downto 0);
 		wait_dac_cnt : out 	std_logic_vector(7 downto 0);
@@ -226,7 +227,7 @@ begin
 			end if;
 			if(reg_wr_addr = 8)then
 				scan_inc_cnt_reg<= reg_wr_data(7 downto 0);
-				step_cnt_reg	<=	(reg_wr_data(14 downto 0)&'0') + 11;
+				step_cnt_reg	<=	(reg_wr_data(6 downto 0)&'0') + 11;
 			end if;
 			if(reg_wr_addr = 9)then
 				offset_voltage_reg<=	reg_wr_data(11 downto 0);
@@ -235,7 +236,7 @@ begin
 				half_wave_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 11)then
-				minus_voltage <=	reg_wr_data(11 downto 0);
+				minus_voltage <=	reg_wr_data(7 downto 0);
 			end if;
 		else
 			null;
@@ -494,14 +495,14 @@ begin
 		end if;
 	end if;
 end process;
---process(sys_clk_80M, sys_rst_n) 
---begin
---	if (sys_rst_n = '0') then
---		pr_state <= IDLE;
---	elsif rising_edge(sys_clk_80M) then
---		pr_state <= nx_state;
---	end if;
---end process;
+process(sys_clk_80M, sys_rst_n) 
+begin
+	if (sys_rst_n = '0') then
+		one_time_end <= '0';
+	elsif rising_edge(sys_clk_80M) then
+		one_time_end <= set_onetime_end;
+	end if;
+end process;
 --
 --
 --process(pr_state,alt_end,wait_finish,poc_count,complete,chopper_ctrl, poc_stable_cnt_finish) --注意敏感列表

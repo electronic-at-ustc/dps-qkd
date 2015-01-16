@@ -153,7 +153,8 @@ architecture Behavioral of PM_receive      is
 		reg_wr_data : IN std_logic_vector(15 downto 0);
 --		lut_data : IN std_logic_vector(15 downto 0);
 		addr_reset : out std_logic;
-		chopper_ctrl : IN std_logic;          
+		chopper_ctrl : IN std_logic;    
+		one_time_end		: out std_logic;
 --		Dac_CLK : OUT std_logic;
 		Dac_Ena : OUT std_logic;
 		Dac_Data : OUT std_logic_vector(11 downto 0);
@@ -194,7 +195,9 @@ architecture Behavioral of PM_receive      is
 		DAC_set_addr   : in std_logic_vector(6 downto 0);
 		DAC_set_result : in std_logic_vector(11 downto 0);
 		DAC_set_data : in std_logic_vector(11 downto 0);
-
+		one_time_end		: in std_logic;
+		use_8apd     : in std_logic;
+		use_4apd     : in std_logic;
 		wait_start	 :	in 	std_logic;
 		wait_count 	 : in 	std_logic_vector(19 downto 0);
 		wait_dac_cnt : in 	std_logic_vector(7 downto 0);
@@ -223,6 +226,7 @@ architecture Behavioral of PM_receive      is
 	signal result_ok :  std_logic;
 	signal addr_reset :  std_logic;
 --	signal Dac_Finish :  std_logic;
+	signal one_time_end		: std_logic;
 	signal Sys_Rst :  std_logic;
 	signal DAC_set_addr   : std_logic_vector(6 downto 0);
 	signal dac_set_result :std_logic_vector(11 downto 0);
@@ -288,6 +292,7 @@ begin
 		half_wave_voltage =>half_wave_voltage,
 		use_8apd => use_8apd,
 		use_4apd => use_4apd,
+		one_time_end => one_time_end,
 		Dac_Ena => Dac_Ena,
 		Dac_Data => DAC_set_data,
 		Sys_Rst =>  Sys_Rst,
@@ -316,6 +321,9 @@ begin
 		sys_rst_n => sys_rst_n,
 		apd_fpga_hit => apd_fpga_hit,
 		dac_finish => dac_finish,
+		use_8apd => use_8apd,
+		use_4apd => use_4apd,
+		one_time_end => one_time_end,
 		offset_voltage =>offset_voltage,
 		half_wave_voltage =>half_wave_voltage,
 		chnl_cnt_reg0_out => chnl_cnt_reg0_out,

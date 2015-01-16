@@ -50,7 +50,8 @@ port(
 		---count out to alt
 		offset_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
 		half_wave_voltage	: in std_logic_vector(11 downto 0);--half_wave_voltage
-		
+		use_8apd     : in std_logic;
+		use_4apd     : in std_logic;
 		wait_start	 :	in 	std_logic;
 		wait_count 	 : in 	std_logic_vector(19 downto 0);
 		wait_dac_cnt : in 	std_logic_vector(7 downto 0);
@@ -73,6 +74,7 @@ port(
 		
 		----alg result------
 		result_ok 		: in std_logic;
+		one_time_end		: in std_logic;
 		DAC_set_addr   : in std_logic_vector(6 downto 0);
 		DAC_set_result : in std_logic_vector(11 downto 0);
 		min_set_result_en : out std_logic;
@@ -87,6 +89,8 @@ signal apd_cnt_reg   : MultiChnlCountType;
 --constant  msecond		: std_logic_vector(19 downto 0) := X"13880";  --*12.5=1ms
 --constant  usecned 	: std_logic_vector(11 downto 0) := X"320";   --*12.5=10us
 signal stable_cnt		: std_logic_vector(19 downto 0) ;
+signal min_cnt		: std_logic_vector(9 downto 0) ;
+signal min_dac		: std_logic_vector(11 downto 0) ;
 --signal count_en_1d		: std_logic;
 --signal count_en_rising		: std_logic;
 --signal dac_finish_1d		: std_logic;
@@ -272,9 +276,16 @@ begin
 	elsif rising_edge(sys_clk_80M) then
 		min_set_result_en	<= one_time_end;
 		if(wait_finish_reg = '1' and wait_dac_cnt /= 0) then ---10 counter
-			if(apd_cnt_reg(0) < min_cnt) then
-				min_cnt	<= apd_cnt_reg(0);
-				min_dac	<= dac_set_data;
+			if(use_4apd = '1') then
+				if(apd_cnt_reg(0) < min_cnt) then
+					min_cnt	<= apd_cnt_reg(0);
+					min_dac	<= dac_set_data;
+				end if;
+			else	---default is APD 2
+				if(apd_cnt_reg(1) < min_cnt) then
+					min_cnt	<= apd_cnt_reg(1);
+					min_dac	<= dac_set_data;
+				end if;
 			end if;
 		elsif(one_time_end = '1') then
 			min_set_result	<= min_dac;
