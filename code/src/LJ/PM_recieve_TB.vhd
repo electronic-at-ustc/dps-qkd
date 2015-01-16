@@ -165,8 +165,12 @@ BEGIN
       wait for sys_clk_80M_period*10;
 		wait for 10 us;	
 		wait until rising_edge(sys_clk_80m);
-		
+		wait for 100 ns ;
 		pm_data_store_en	<= '1';
+		
+		wait until rising_edge(sys_clk_80m);
+		pm_steady_test	<= '1';
+		wait for 100 ns ;
 		wait for 10 ms;
 		chopper_ctrl	<= '1';
 		

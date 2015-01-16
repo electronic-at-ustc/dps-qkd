@@ -347,58 +347,68 @@ rdn_gen : for i in 0 to 4-1 generate
 		
 		wait until rising_edge(cpld_fpga_clk);
 		
---		cpld_fpga_sglwr	<=	'1';
---		cpld_fpga_addr	<=	x"A0";
---		cpld_fpga_data <= x"00000069";
---		wait for cpld_fpga_clk_period;
---		cpld_fpga_sglwr	<=	'0';
---		wait for cpld_fpga_clk_period*3;
-
-
-		
-		wait until rising_edge(cpld_fpga_clk);
-		for i in 0 to 1023 loop
---		while (lut_wr_data < 1024) loop 
-			lut_wr_en 	<= '1';
-			cpld_fpga_sglwr	<= '1';
-			cpld_fpga_addr	<=	x"A9";
-			cpld_fpga_data <= "010000" & lut_wr_data(9 downto 0) & '0' & lut_wr_data(15 downto 1);
-			wait for cpld_fpga_clk_period;
-			lut_wr_en <= '0';
-			cpld_fpga_sglwr	<= '0';
-			lut_wr_data <= lut_wr_data + 1;
-			wait for cpld_fpga_clk_period * 3;--1024*3
-		end loop;
-		
---		wait for cpld_fpga_clk_period;
---		cpld_fpga_sglwr	<=	'0';
---		wait for cpld_fpga_clk_period*3;
---		end loop;
-		wait for 150 us;
-		wait until rising_edge(cpld_fpga_clk);
-		
 		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A5";
-		cpld_fpga_data <= x"00000200";
+		cpld_fpga_addr	<=	x"A0";
+		cpld_fpga_data <= x"00000E69";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
+
+
 		
-		wait for 1 us;
+--		wait until rising_edge(cpld_fpga_clk);
+--		for i in 0 to 1023 loop
+----		while (lut_wr_data < 1024) loop 
+--			lut_wr_en 	<= '1';
+--			cpld_fpga_sglwr	<= '1';
+--			cpld_fpga_addr	<=	x"A9";
+--			cpld_fpga_data <= "010000" & lut_wr_data(9 downto 0) & '0' & lut_wr_data(15 downto 1);
+--			wait for cpld_fpga_clk_period;
+--			lut_wr_en <= '0';
+--			cpld_fpga_sglwr	<= '0';
+--			lut_wr_data <= lut_wr_data + 1;
+--			wait for cpld_fpga_clk_period * 3;--1024*3
+--		end loop;
+--		
+----		wait for cpld_fpga_clk_period;
+----		cpld_fpga_sglwr	<=	'0';
+----		wait for cpld_fpga_clk_period*3;
+----		end loop;
+--		wait for 150 us;
+--		wait until rising_edge(cpld_fpga_clk);
+--		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A5";
+--		cpld_fpga_data <= x"00000200";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
+--		wait for 1 us;
+--		wait until rising_edge(cpld_fpga_clk);
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A1";
+--		cpld_fpga_data <= x"0800086A";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
+		wait for 200 ns;
 		wait until rising_edge(cpld_fpga_clk);
+--		
 		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A1";
-		cpld_fpga_data <= x"0800086A";
+		cpld_fpga_addr	<=	x"A5";
+		cpld_fpga_data <= x"00000100";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
 		
 		wait for 200 ns;
 		wait until rising_edge(cpld_fpga_clk);
-		
+--		
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A6";
-		cpld_fpga_data <= x"00000100";
+		cpld_fpga_data <= x"00100100";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
@@ -422,66 +432,66 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
-		
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
-		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A9";
-		cpld_fpga_data <= x"80000100";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
-		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A9";
-		cpld_fpga_data <= x"C0000100";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
-		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A9";
-		cpld_fpga_data <= x"00200100";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
+--		
+--		wait for 200 ns;
+--		wait until rising_edge(cpld_fpga_clk);
+--		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A9";
+--		cpld_fpga_data <= x"80000100";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
+--		wait for 200 ns;
+--		wait until rising_edge(cpld_fpga_clk);
+--		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A9";
+--		cpld_fpga_data <= x"C0000100";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
+--		wait for 200 ns;
+--		wait until rising_edge(cpld_fpga_clk);
+--		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A9";
+--		cpld_fpga_data <= x"00200100";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
 		wait for 10 us;
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A2";
-		cpld_fpga_data <= "00" & "10110" & "00011" & "00000" & "00000" & "00011" & "10110";
+		cpld_fpga_data <= x"00000000";--"00" & "00110" & "00011" & "00000" & "00000" & "00011" & "10110";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
-		
-		wait for 1 us;
-		wait until rising_edge(cpld_fpga_clk);
-		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A4";
-		cpld_fpga_data <= x"00008040";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
+--		
+--		wait for 1 us;
+--		wait until rising_edge(cpld_fpga_clk);
+--		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A4";
+--		cpld_fpga_data <= x"00008040";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
 		wait for 1 us;
 		wait until rising_edge(cpld_fpga_clk);
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A3";
-		cpld_fpga_data <= x"00004880";
+		cpld_fpga_data <= x"80007880";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
-		
-		wait for 1 us;
-		wait until rising_edge(cpld_fpga_clk);
+--		
+--		wait for 1 us;
+--		wait until rising_edge(cpld_fpga_clk);
 		
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"13";
@@ -493,15 +503,15 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for 1 us;
 		wait until rising_edge(cpld_fpga_clk);
 		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"10";
-		cpld_fpga_data <= x"000000F0";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-		wait for 1000 us;---must wait
-		wait until rising_edge(cpld_fpga_clk);
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"10";
+--		cpld_fpga_data <= x"000000F0";
+--		wait for cpld_fpga_clk_period;
+--		cpld_fpga_sglwr	<=	'0';
+--		wait for cpld_fpga_clk_period*3;
+--		
+--		wait for 1000 us;---must wait
+--		wait until rising_edge(cpld_fpga_clk);
 		
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"10";

@@ -214,7 +214,7 @@ Inst_lut_ram_128 : lut_ram_128
     clka 	=> sys_clk,
     wea(0)		=> min_set_result_en,
     addra 	=> lut_ram_128_addra,
-    dina 	=> min_set_resul,
+    dina 	=> min_set_result,
 --    douta	=> lut_ram_128_douta,
     clkb 	=> sys_clk,
 	 addrb 	=> lut_ram_128_addr,
