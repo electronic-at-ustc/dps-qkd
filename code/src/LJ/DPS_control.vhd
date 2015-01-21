@@ -340,11 +340,13 @@ begin
 				send_enable_250M		<= send_enable;
 				exp_running_reg		<= exp_running;
 				exp_running_250M		<= exp_running_reg;
-				if(exp_running_reg = '1' and send_enable_250M = '1') then
+				if(exp_running_reg = '1') then
 					if(syn_light_cnt < DPS_round_cnt_reg) then
 						syn_light_cnt	<= syn_light_cnt + 1;
 					else
-						syn_light_cnt	<= (others => '0');
+						if(send_enable_250M = '1') then
+							syn_light_cnt	<= (others => '0');	
+						end if;		
 					end if;
 				else
 					syn_light_cnt	<= (others => '0');
@@ -354,9 +356,9 @@ begin
   end process;
   
   ---syn light has 16 sys_clk_250M clock width
-  process(syn_light_cnt, DPS_syn_dly_cnt_reg, send_enable) 
+  process(syn_light_cnt, DPS_syn_dly_cnt_reg, send_enable_250M) 
   begin 
-		if(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_reg and send_enable = '1') then
+		if(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_reg and send_enable_250M = '1') then
 			syn_light_sig	<= '1'; 
 		else
 			syn_light_sig	<= '0';
