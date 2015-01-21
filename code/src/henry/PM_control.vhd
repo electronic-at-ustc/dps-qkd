@@ -114,7 +114,7 @@ signal config_reg2 : std_logic_vector(11 downto 0);
 signal config_reg3 : std_logic_vector(11 downto 0);
 signal half_wave_voltage_reg : std_logic_vector(11 downto 0);
 signal offset_voltage_reg : std_logic_vector(11 downto 0);
-signal minus_voltage : std_logic_vector(7 downto 0);
+signal minus_voltage : std_logic_vector(10 downto 0);
 signal Dac_set_result_low : std_logic_vector(11 downto 0);
 signal scan_dac_data : std_logic_vector(11 downto 0);
 
@@ -190,8 +190,8 @@ begin
 		scan_inc_cnt_reg <=	x"1F";--
 		offset_voltage_reg<=	x"BD7";--  -1.5V
 		half_wave_voltage_reg<=	x"385";--1.1V
-		minus_voltage<=	x"A4";--
-		step_cnt_reg	<=	x"1B";--
+		minus_voltage<=	"001" & x"48";--
+		step_cnt_reg	<=	x"33";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
 	elsif rising_edge(sys_clk_80M) then		
@@ -227,7 +227,7 @@ begin
 			end if;
 			if(reg_wr_addr = 8)then
 				scan_inc_cnt_reg<= reg_wr_data(7 downto 0);
-				step_cnt_reg	<=	(reg_wr_data(6 downto 0)&'0') + 11;
+				step_cnt_reg	<=	(reg_wr_data(14 downto 8)&'0') + 11;
 			end if;
 			if(reg_wr_addr = 9)then
 				offset_voltage_reg<=	reg_wr_data(11 downto 0);
@@ -236,7 +236,7 @@ begin
 				half_wave_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 11)then
-				minus_voltage <=	reg_wr_data(7 downto 0);
+				minus_voltage <=	reg_wr_data(10 downto 0);
 			end if;
 		else
 			null;
@@ -367,7 +367,7 @@ process(sys_clk_80M, sys_rst_n)
 					set_count	<= x"00";
 				elsif(set_count > 0) then
 					if(add_set_count = '1') then
-						if(set_count < 12+step_cnt_reg) then
+						if(set_count < step_cnt_reg) then
 							set_count	<= set_count + 1;
 						else
 							set_count	<= x"01";
@@ -382,7 +382,7 @@ process(sys_clk_80M, sys_rst_n)
   
   process(wait_finish, set_count) 
   begin 
-		if(wait_finish = '1' and step_cnt = step_cnt_reg) then
+		if(wait_finish = '1' and set_count = step_cnt_reg) then
 			set_onetime_end	<= '1';
 		else
 			set_onetime_end	<= '0';
