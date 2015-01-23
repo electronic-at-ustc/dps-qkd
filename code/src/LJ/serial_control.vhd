@@ -64,6 +64,10 @@ port(
 		serial_fifo_rdy				:  out std_logic;--fifo has spare space
 		iodelay_ctrl_rdy				:  out std_logic;
 		
+		send_write_prepare		: 	out std_logic;
+		send_write_back_en		: 	out std_logic;
+		send_write_back_data		: 	out std_logic_VECTOR(63 downto 0);
+		
 		delay_AM1_out			: out	std_logic_vector(29 downto 0);
 --		delay_AM2_out			: out	std_logic_vector(4 downto 0);
 --		delay_PM_out 			: out	std_logic_vector(4 downto 0);
@@ -156,6 +160,7 @@ signal 	wr_en_2			: 	std_logic;
 signal 	rd_en2			: 	std_logic;
 signal 	dout2			: 	std_logic_VECTOR(1 downto 0);
 
+
 signal 	test_signal_delay_reg	: 	std_logic;
 signal 	fifo_2_rdy_wr_clk	: 	std_logic;
 signal 	fifo_2_rdy_rd_clk	: 	std_logic;
@@ -164,6 +169,17 @@ signal 	AM2_clk	: 	std_logic;
 signal 	serial_AM1	: 	std_logic;
 signal 	serial_AM2	: 	std_logic;
 signal 	sys_rst_h	: 	std_logic;
+
+signal 	send_en_AM_d1				: 	std_logic;
+signal 	send_en_80M_d1				: 	std_logic;
+signal 	send_en_80M_d2				: 	std_logic;
+signal 	send_write_en				: 	std_logic;
+signal 	send_write_en_ds			: 	std_logic_vector(7 downto 0);
+--signal 	send_write_en_d2			: 	std_logic;
+--signal 	send_write_en_d3			: 	std_logic;
+
+signal 	send_write_data			: 	std_logic_VECTOR(127 downto 0);
+signal 	send_syn_cnt				: 	std_logic_VECTOR(23 downto 0);
 
 --signal 	send_cnt		: 	std_logic_VECTOR(1 downto 0);
 
@@ -411,6 +427,70 @@ process (valid2,dout2,delay_AM1,test_signal_delay_reg,exp_running)
 		elsif (serial_fifo_rd_clk'event and serial_fifo_rd_clk = '1') then
 			rd_en2 <= send_en;
 			test_signal_delay_reg	<= test_signal_delay;
+		end if;
+	end process;
+	
+	process (serial_fifo_rd_clk,sys_rst_n)
+	begin  
+		if sys_rst_n = '0' then
+			send_en_AM_d1	<= '0';
+			send_write_data	<= (others => '0');
+		elsif (serial_fifo_rd_clk'event and serial_fifo_rd_clk = '1') then
+			send_en_AM_d1	<= send_en_AM;
+			if(valid2= '1') then
+				send_write_data <= send_write_data(125 downto 0) & dout2;
+			else
+				if(send_en_AM_d1 = '0' and send_en_AM = '1') then
+					send_write_data	<= (others => '0');
+				end if;
+			end if;
+		end if;
+	end process;
+	
+	send_write_back_data(63 downto 32) <= x"CC" & send_syn_cnt;
+	process (serial_fifo_wr_clk,sys_rst_n)
+	begin  
+		if sys_rst_n = '0' then
+			send_en_80M_d1	<= '0';
+			send_en_80M_d2	<= '0';
+			send_write_back_en	<= '0';
+			send_syn_cnt	<= (others => '0');
+			send_write_en_ds	<= (others => '0');
+			send_write_prepare<= '0';
+			send_write_back_data(31 downto 0)	<= (others => '0');
+		elsif (serial_fifo_wr_clk'event and serial_fifo_wr_clk = '1') then
+			send_en_80M_d1	<= send_en_AM;
+			send_en_80M_d2	<= send_en_80M_d1;
+			if(send_en_80M_d1 = '0' and send_en_80M_d2 = '1') then---falling edge
+				send_write_en	<= '1';
+			else
+				send_write_en	<= '0';
+			end if;
+			
+			if(send_en_80M_d1 = '1' and send_en_80M_d2 = '0') then---rising edge
+				send_syn_cnt	<= send_syn_cnt + 1;
+			elsif(exp_running = '0') then
+				send_syn_cnt	<= (others => '0');
+			end if;
+			
+			send_write_en_ds	<= send_write_en_ds(6 downto 0) & send_write_en;
+			if(send_write_en_ds = 0) then
+				send_write_prepare<= '0';
+			else
+				send_write_prepare<= '1';
+			end if;
+			
+			if(send_write_en_ds(6) = '1') then
+				send_write_back_data(31 downto 0) <= send_write_data(31 downto 0);
+			elsif(send_write_en_ds(5) = '1') then
+				send_write_back_data(31 downto 0) <= send_write_data(63 downto 32);
+			elsif(send_write_en_ds(4) = '1') then
+				send_write_back_data(31 downto 0) <= send_write_data(95 downto 64);
+			elsif(send_write_en_ds(3) = '1') then
+				send_write_back_data(31 downto 0) <= send_write_data(127 downto 96);
+			end if;
+			
+			send_write_back_en	<= send_write_en_ds(6) or send_write_en_ds(5) or send_write_en_ds(4) or send_write_en_ds(3);
 		end if;
 	end process;
 	
