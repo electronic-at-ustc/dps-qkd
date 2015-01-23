@@ -62,6 +62,7 @@ generic
 			dac_test_data		 	: IN std_logic_vector(15 downto 0);
 			pm_dac_en 			: in	std_logic;
 			pm_dac_data		 	: IN std_logic_vector(11 downto 0);
+			lut_ram_128_vld  : out std_logic;
 			lut_ram_128_addr : out std_logic_vector(6 downto 0);
 			lut_ram_128_data : IN std_logic_vector(11 downto 0);
 			
@@ -135,12 +136,14 @@ begin
 		syn_light_d1	<= '0';
 		syn_light_d2	<= '0';
 		rnd_rd_en		<= '0';
-		pm_rd_vld		<= '0';
+		rnd_rd_en		<= '0';
+		lut_ram_128_vld<= '0';
 	elsif rising_edge(sys_clk) then
 		syn_light_d1	<= syn_light;
 		syn_light_d2	<= syn_light_d1;
 		rnd_rd_en		<= syn_light_d1 and (not syn_light_d2) and (not Alice_H_Bob_L);--rising edge
 		pm_rd_vld		<= rnd_rd_vld;
+		lut_ram_128_vld<= pm_rd_vld;
 	end if;
  end process;
  
