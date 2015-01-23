@@ -55,6 +55,10 @@ generic
 	  random_fifo_empty			:  in std_logic;--fifo has data
 	  random_fifo_vld				:  in std_logic;--fifo read data valid
 	  
+	  send_write_prepare		: 	in std_logic;
+	  send_write_back_en		: 	in std_logic;
+	  send_write_back_data		: 	in std_logic_VECTOR(63 downto 0);
+	  
 	  dps_cpldif_fifo_wr_en		:	out	std_logic;
 	  dps_cpldif_fifo_wr_data		:	out	std_logic_vector(63 downto 0);
 	  cpldif_dps_fifo_prog_full	:	in	std_logic;
@@ -91,7 +95,7 @@ begin
   ---calibreation is done
   process(exp_running, random_fifo_empty, serial_fifo_rdy_reg, cpldif_dps_fifo_prog_full) 
   begin 
-		if(exp_running = '1' and random_fifo_empty = '0' and serial_fifo_rdy_reg = '1' and cpldif_dps_fifo_prog_full = '0') then
+		if(exp_running = '1' and random_fifo_empty = '0' and serial_fifo_rdy_reg = '1' and cpldif_dps_fifo_prog_full = '0' and send_write_prepare = '0') then
 			fifo_operate_permit	<= '1';
 		else
 			fifo_operate_permit	<= '0';
@@ -211,7 +215,8 @@ begin
 						dps_cpldif_fifo_wr_en_reg	<= '1';
 						dps_cpldif_fifo_wr_data	<= x"BB" & dps_cpldif_fifo_wr_cnt & PM_wr_data;
 					else
-						dps_cpldif_fifo_wr_en_reg	<= '0';
+						dps_cpldif_fifo_wr_en_reg	<= send_write_back_en;
+						dps_cpldif_fifo_wr_data	<= send_write_back_data;
 					end if;
 				end if;
 			end if;
