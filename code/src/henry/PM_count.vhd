@@ -71,6 +71,10 @@ port(
 		
 		alg_data_wr			: out	std_logic;
 		alg_data_wr_data	: out	std_logic_vector(47 downto 0);
+		---------
+		lut_ram_128_vld  : in std_logic;
+		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
+		lut_ram_128_data : in STD_LOGIC_vector(11 downto 0);
 		
 		----alg result------
 		result_ok 		: in std_logic;
@@ -260,7 +264,12 @@ begin
 				alg_data_wr					<= '1';
 				alg_data_wr_data			<=	x"A" & half_wave_voltage & offset_voltage & "0" & DAC_set_addr & DAC_set_result;
 			else
-				alg_data_wr					<= '0';
+				if(lut_ram_128_vld = '1') then
+					alg_data_wr					<= '1';
+					alg_data_wr_data			<=	x"B00000" & "0" & lut_ram_128_addr & x"0" & lut_ram_128_data;
+				else
+					alg_data_wr					<= '0';
+				end if;
 			end if;
 		end if;
 	end if;
