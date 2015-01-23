@@ -163,6 +163,10 @@ COMPONENT clock_manage
 	   dps_cpldif_fifo_wr_data		:	out	std_logic_vector(63 downto 0);
 	   cpldif_dps_fifo_prog_full	:	in	std_logic;
 		
+		send_write_prepare		: 	in std_logic;
+		send_write_back_en		: 	in std_logic;
+		send_write_back_data		: 	in std_logic_VECTOR(63 downto 0);
+		
 		rnd_data_store_en	: in std_logic;
 		PM_wr_en			:	in	std_logic;
 	   PM_wr_data		:	in	std_logic_vector(47 downto 0);
@@ -204,6 +208,10 @@ COMPONENT clock_manage
 --		delay_PM 						: in	std_logic_vector(4 downto 0);
 		
 		serial_fifo_rdy				:  out std_logic;--fifo has spare space
+		
+		send_write_prepare		: 	out std_logic;
+		send_write_back_en		: 	out std_logic;
+		send_write_back_data		: 	out std_logic_VECTOR(63 downto 0);
 		
 		delay_AM1_out			: out	std_logic_vector(29 downto 0);
 --		delay_AM2_out			: out	std_logic_vector(4 downto 0);
@@ -326,6 +334,7 @@ COMPONENT clock_manage
 		dac_test_data		 	: IN std_logic_vector(15 downto 0);
 		pm_dac_en 			: in	std_logic;
 		pm_dac_data		 	: IN std_logic_vector(11 downto 0);
+		lut_ram_128_vld  : out std_logic;
 		lut_ram_128_addr : out std_logic_vector(6 downto 0);
 		lut_ram_128_data : IN std_logic_vector(11 downto 0);
 		POC_control_en : IN std_logic;
@@ -347,6 +356,7 @@ COMPONENT clock_manage
 		apd_fpga_hit : IN std_logic_vector(1 downto 0);
 		lut_ram_rd_data : IN std_logic_vector(15 downto 0);
 		lut_ram_128_addr : IN std_logic_vector(6 downto 0);
+		lut_ram_128_vld  : in std_logic;
 		chopper_ctrl : IN std_logic;          
 		pm_steady_test : IN std_logic; 
 		scan_data_store_en: in std_logic;
@@ -444,6 +454,10 @@ signal		PM_wr_en			:	std_logic:='0';
 signal		PM_wr_data		:	std_logic_vector(47 downto 0):=(others => '0');
 -----------------end for Bob
 
+signal send_write_prepare			:  std_logic;
+signal send_write_back_en			:  std_logic;
+signal send_write_back_data		:  std_logic_VECTOR(63 downto 0);
+
 signal		Alice_H_Bob_L 		: std_logic;
 signal		POC_fifo_rdy 		: std_logic;
 signal		serial_fifo_rdy 		: std_logic;
@@ -460,6 +474,7 @@ signal		temp_out_n 	:  std_logic;
 -- COMP_TAG_END ------ End COMPONENT Declaration ------------
 --	signal	exp_running 		: std_logic;
 --	signal	exp_stopping 		: std_logic;
+	signal 	lut_ram_128_vld  : std_logic;
 	signal	DPS_send_AM_dly_cnt 	: std_logic_vector(7 downto 0);
 	signal	DPS_send_PM_dly_cnt 	: std_logic_vector(7 downto 0);
 	signal	DPS_syn_dly_cnt 	: std_logic_vector(11 downto 0);
@@ -541,6 +556,9 @@ PORT MAP(
 		Alice_H_Bob_L => Alice_H_Bob_L,
 		cpldif_dps_fifo_prog_full => cpldif_dps_fifo_prog_full,
 		POC_fifo_rdy => POC_fifo_rdy,
+		send_write_prepare => send_write_prepare,
+		send_write_back_en => send_write_back_en,
+		send_write_back_data => send_write_back_data,
 		rnd_data_store_en => rnd_data_store_en,
 		serial_fifo_rdy => serial_fifo_rdy,
 		serial_fifo_wr_en => serial_fifo_wr_en,
@@ -573,6 +591,9 @@ PORT MAP(
 		serial_out_clk => sys_clk_500M,--500M
 		serial_fifo_wr_en => serial_fifo_wr_en,
 		serial_fifo_wr_data => serial_fifo_wr_data,
+		send_write_prepare => send_write_prepare,
+		send_write_back_en => send_write_back_en,
+		send_write_back_data => send_write_back_data,
 		send_en => send_en,
 		send_en_AM => send_en_AM,
 		delay_load => delay_load,
@@ -685,6 +706,7 @@ PORT MAP(
 		dac_test_data => lut_wr_data(15 downto 0),
 		pm_dac_en => pm_dac_en,
 		pm_dac_data => pm_dac_data,
+		lut_ram_128_vld => lut_ram_128_vld,
 		lut_ram_128_addr => lut_ram_128_addr,
 		lut_ram_128_data => lut_ram_128_data,
 --		chopper_contrl => chopper_ctrl_sig,
@@ -725,6 +747,7 @@ PORT MAP(
 		apd_fpga_hit => apd_fpga_hit,
 		lut_ram_rd_addr => lut_rd_addr,
 		lut_ram_rd_data => lut_rd_data,
+		lut_ram_128_vld => lut_ram_128_vld,
 		lut_ram_128_addr => lut_ram_128_addr,
 		lut_ram_128_data => lut_ram_128_data,
 		alg_data_wr => PM_wr_en,
