@@ -331,7 +331,7 @@ begin
   process(sys_clk_250M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
-			syn_light_cnt		<= (others => '0');
+			syn_light_cnt		<= (others => '1');
 			exp_running_250M	<= '0';
 			send_enable_250M	<= '0';
 			exp_running_reg	<= '0';
@@ -349,7 +349,7 @@ begin
 						end if;		
 					end if;
 				else
-					syn_light_cnt	<= (others => '0');
+					syn_light_cnt	<= (others => '1');
 				end if;
 			end if;
 		end if;
@@ -367,7 +367,7 @@ begin
   
   process(syn_light_cnt, DPS_round_cnt_AM, DPS_round_cnt_AM_sub64) 
   begin 
-		if(syn_light_cnt <= DPS_round_cnt_AM and syn_light_cnt > DPS_round_cnt_AM_sub64) then
+		if(syn_light_cnt < DPS_round_cnt_AM and syn_light_cnt >= DPS_round_cnt_AM_sub64) then
 			send_en_AM_reg	<= '1'; 
 		else
 			send_en_AM_reg	<= '0';
