@@ -69,6 +69,7 @@ port(
 		lut_ram_rd_addr	: out std_logic_vector(9 downto 0); 
 		lut_ram_rd_data	: in std_logic_vector(15 downto 0); 
 		------lut_ram 128------------------------
+		lut_ram_128_vld  : in std_logic;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
 		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
 		
@@ -114,6 +115,7 @@ architecture Behavioral of PM_receive      is
 		--lut_wr_en: in std_logic; -- LUT查找表写使能 
 		lut_ram_rd_addr	: out std_logic_vector(9 downto 0); 
 		lut_ram_rd_data	: in std_logic_vector(15 downto 0); 
+
 		------lut_ram 128------------------------
 		min_set_result_en : in std_logic;
 		min_set_result : in std_logic_vector(11 downto 0);
@@ -213,6 +215,11 @@ architecture Behavioral of PM_receive      is
 		chnl_cnt_reg7_out : OUT std_logic_vector(9 downto 0);
 --		chnl_cnt_reg8_out : OUT std_logic_vector(9 downto 0);
 --		chnl_cnt_reg9_out : OUT std_logic_vector(9 downto 0);
+
+		lut_ram_128_vld  : in std_logic;
+		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
+		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
+		
 		min_set_result_en : out std_logic;
 		min_set_result : out std_logic_vector(11 downto 0);
 		alg_data_wr : OUT std_logic;
@@ -249,6 +256,8 @@ architecture Behavioral of PM_receive      is
 	signal half_wave_voltage : std_logic_vector(11 downto 0);
 	signal offset_voltage : std_logic_vector(11 downto 0);
 	
+	signal lut_ram_128_data_sig : std_logic_vector(11 downto 0);
+	
 	signal	wait_start	 :	std_logic;
 	signal	wait_count 	 : std_logic_vector(19 downto 0);
 	signal	wait_dac_cnt : std_logic_vector(7 downto 0);
@@ -277,7 +286,7 @@ begin
 		addr_reset => addr_reset,
 		tan_adj_voltage => tan_adj_voltage,
 		lut_ram_128_addr => lut_ram_128_addr,
-		lut_ram_128_data => lut_ram_128_data,
+		lut_ram_128_data => lut_ram_128_data_sig,
 		result_ok => result_ok,
 		DAC_set_addr => DAC_set_addr,
 		DAC_set_result => Dac_set_result,
@@ -336,6 +345,9 @@ begin
 		chnl_cnt_reg7_out => chnl_cnt_reg7_out,
 --		chnl_cnt_reg8_out => chnl_cnt_reg8_out,
 --		chnl_cnt_reg9_out => chnl_cnt_reg9_out,
+		lut_ram_128_vld => lut_ram_128_vld,
+		lut_ram_128_addr => lut_ram_128_addr,
+		lut_ram_128_data => lut_ram_128_data_sig,
 		wait_start => wait_start,
 		wait_finish => wait_finish,
 		wait_dac_cnt		=> wait_dac_cnt,
@@ -354,6 +366,6 @@ begin
 --		alt_begin => alt_begin,
 --		chopper_ctrl => chopper_ctrl
 	);
-
+	lut_ram_128_data	<= lut_ram_128_data_sig;
 end Behavioral;
 
