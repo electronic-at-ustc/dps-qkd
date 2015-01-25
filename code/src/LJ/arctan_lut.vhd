@@ -276,7 +276,7 @@ end process;
 		if(addr_reset = '1') then
 			lut_ram_128_addra	<= (others => '0');
 		else
-			if(lut_ram_128_wen = '1') then
+			if(min_set_result_en = '1') then
 				lut_ram_128_addra	<= lut_ram_128_addra+1; --if£¨wen£©
 			else
 				lut_ram_128_addra  <= lut_ram_128_addra;
