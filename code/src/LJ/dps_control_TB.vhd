@@ -48,7 +48,7 @@ ARCHITECTURE behavior OF dps_control_TB IS
          exp_running : IN  std_logic;
          Alice_H_Bob_L : IN  std_logic;
          gps_pulse : IN  std_logic;
-         pm_steady_test : IN  std_logic;
+--         pm_steady_test : IN  std_logic;
          GPS_period_cnt : IN  std_logic_vector(31 downto 0);
          DPS_send_PM_dly_cnt : IN  std_logic_vector(7 downto 0);
          DPS_send_AM_dly_cnt : IN  std_logic_vector(7 downto 0);
@@ -80,15 +80,15 @@ ARCHITECTURE behavior OF dps_control_TB IS
    signal gps_pulse : std_logic := '0';
    signal pm_steady_test : std_logic := '0';
    signal GPS_period_cnt : std_logic_vector(31 downto 0) := x"8004B400";
-   signal DPS_send_PM_dly_cnt : std_logic_vector(7 downto 0) := (others => '0');
+   signal DPS_send_PM_dly_cnt : std_logic_vector(7 downto 0) := x"20";
    signal DPS_send_AM_dly_cnt : std_logic_vector(7 downto 0) := (others => '0');
-   signal DPS_syn_dly_cnt : std_logic_vector(11 downto 0) := (others => '0');
+   signal DPS_syn_dly_cnt : std_logic_vector(11 downto 0) := x"020";
    signal DPS_round_cnt : std_logic_vector(15 downto 0) := x"61A7";
    signal DPS_chopper_cnt : std_logic_vector(3 downto 0) := (others => '0');
-   signal set_send_enable_cnt : std_logic_vector(31 downto 0) := X"00003600";
-   signal set_send_disable_cnt : std_logic_vector(31 downto 0) := X"00001200";
-   signal set_chopper_enable_cnt : std_logic_vector(31 downto 0) := X"00002400";
-   signal set_chopper_disable_cnt : std_logic_vector(31 downto 0) := X"00002400";
+   signal set_send_enable_cnt : std_logic_vector(31 downto 0) := X"00042400";
+   signal set_send_disable_cnt : std_logic_vector(31 downto 0) := X"00000100";
+   signal set_chopper_enable_cnt : std_logic_vector(31 downto 0) := X"00042400";
+   signal set_chopper_disable_cnt : std_logic_vector(31 downto 0) := X"00042400";
 
  	--Outputs
    signal GPS_pulse_int : std_logic;
@@ -115,7 +115,7 @@ BEGIN
           exp_running => exp_running,
           Alice_H_Bob_L => Alice_H_Bob_L,
           gps_pulse => gps_pulse,
-          pm_steady_test => pm_steady_test,
+--          pm_steady_test => pm_steady_test,
           GPS_period_cnt => GPS_period_cnt,
           DPS_send_PM_dly_cnt => DPS_send_PM_dly_cnt,
           DPS_send_AM_dly_cnt => DPS_send_AM_dly_cnt,
@@ -156,15 +156,17 @@ BEGIN
 	GPS_process :process
    begin
 		wait until rising_edge(GPS_pulse_int);
-		wait for 56 ns;
+		wait for 1000 ns;
 		gps_pulse <= '1';
-		wait for 100 ns;
+		wait for 56 ns;
+		gps_pulse <= '0';
+		wait for 50 ms;
 		gps_pulse <= '0';
    end process;
 	
 	exp_running_process :process
    begin
-		wait until rising_edge(gps_pulse);
+--		wait until rising_edge(gps_pulse);
 		wait until rising_edge(gps_pulse);
 		wait for 20 ns;
 		wait until rising_edge(sys_clk_80M);

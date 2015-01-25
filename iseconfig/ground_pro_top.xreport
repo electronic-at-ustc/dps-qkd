@@ -1,12 +1,12 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <report-views version="2.0" >
  <header>
-  <DateModified>2015-01-15T16:26:07</DateModified>
+  <DateModified>2015-01-25T16:35:43</DateModified>
   <ModuleName>ground_pro_top</ModuleName>
-  <SummaryTimeStamp>2015-01-13T21:34:21</SummaryTimeStamp>
+  <SummaryTimeStamp>2015-01-21T22:31:50</SummaryTimeStamp>
   <SavedFilePath>E:/Work/FPGA/ground_pro_all_DPS_QKD_test/ground_pro_use_PPG/iseconfig/ground_pro_top.xreport</SavedFilePath>
   <ImplementationReportsDirectory>E:/Work/FPGA/ground_pro_all_DPS_QKD_test/ground_pro_use_PPG\</ImplementationReportsDirectory>
-  <DateInitialized>2014-12-27T10:26:56</DateInitialized>
+  <DateInitialized>2015-01-22T00:35:56</DateInitialized>
   <EnableMessageFiltering>false</EnableMessageFiltering>
  </header>
  <body>

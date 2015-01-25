@@ -167,41 +167,46 @@ BEGIN
 		wait until rising_edge(sys_clk_80m);
 		wait for 100 ns ;
 		pm_data_store_en	<= '1';
-		
+--		
+--		wait until rising_edge(sys_clk_80m);
+--		pm_steady_test	<= '1';
+--		wait for 100 ns ;
+		wait for 10 ms;
 		wait until rising_edge(sys_clk_80m);
-		pm_steady_test	<= '1';
-		wait for 100 ns ;
-		wait for 10 ms;
 		chopper_ctrl	<= '1';
 		
 		wait for 10 ms;
 		chopper_ctrl	<= '0';
 		
 		wait for 10 ms;
+		wait until rising_edge(sys_clk_80m);
 		chopper_ctrl	<= '1';
 		
 		wait for 10 ms;
 		chopper_ctrl	<= '0';
 		
 		wait for 10 ms;
+		wait until rising_edge(sys_clk_80m);
 		chopper_ctrl	<= '1';
 		
 		wait for 10 ms;
 		chopper_ctrl	<= '0';
 		
 		wait for 10 ms;
+		wait until rising_edge(sys_clk_80m);
 		chopper_ctrl	<= '1';
 		
 		wait for 10 ms;
 		chopper_ctrl	<= '0';
 
-		pm_steady_test	<= '1';
-		wait for 100 ns ;
-		
-		pm_data_store_en	<= '1';
-		
+--		pm_steady_test	<= '1';
+--		wait for 100 ns ;
+--		
+--		pm_data_store_en	<= '1';
+--		
 		pm_steady_test	<= '0';
 		wait for 105 ms ;
+		wait until rising_edge(sys_clk_80m);
 		
 		pm_steady_test	<= '1';
 		wait for 100 ns ;

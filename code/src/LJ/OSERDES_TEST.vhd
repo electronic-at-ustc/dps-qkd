@@ -198,6 +198,7 @@ COMPONENT clock_manage
 		serial_fifo_wr_clk : IN std_logic;
 		serial_fifo_rd_clk : IN std_logic;
 		serial_out_clk : IN std_logic;
+		rnd_data_store_en : IN std_logic;
 		serial_fifo_wr_en : IN std_logic;
 		serial_fifo_wr_data : IN std_logic_vector(DATA_WIDTH*BURST_LEN-1 downto 0);
 		send_en							:	in std_logic;--serial output enable
@@ -594,6 +595,7 @@ PORT MAP(
 		send_write_prepare => send_write_prepare,
 		send_write_back_en => send_write_back_en,
 		send_write_back_data => send_write_back_data,
+		rnd_data_store_en => rnd_data_store_en,
 		send_en => send_en,
 		send_en_AM => send_en_AM,
 		delay_load => delay_load,
