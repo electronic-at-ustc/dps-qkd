@@ -200,6 +200,7 @@ architecture Behavioral of PM_receive      is
 		one_time_end		: in std_logic;
 		use_8apd     : in std_logic;
 		use_4apd     : in std_logic;
+		pm_data_store_en	: in std_logic;
 		wait_start	 :	in 	std_logic;
 		wait_count 	 : in 	std_logic_vector(19 downto 0);
 		wait_dac_cnt : in 	std_logic_vector(7 downto 0);
@@ -216,9 +217,10 @@ architecture Behavioral of PM_receive      is
 --		chnl_cnt_reg8_out : OUT std_logic_vector(9 downto 0);
 --		chnl_cnt_reg9_out : OUT std_logic_vector(9 downto 0);
 
+		chopper_ctrl  : in std_logic;
 		lut_ram_128_vld  : in std_logic;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
-		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
+		lut_ram_128_data : in STD_LOGIC_vector(11 downto 0); 
 		
 		min_set_result_en : out std_logic;
 		min_set_result : out std_logic_vector(11 downto 0);
@@ -333,6 +335,7 @@ begin
 		use_8apd => use_8apd,
 		use_4apd => use_4apd,
 		one_time_end => one_time_end,
+		pm_data_store_en => pm_data_store_en,
 		offset_voltage =>offset_voltage,
 		half_wave_voltage =>half_wave_voltage,
 		chnl_cnt_reg0_out => chnl_cnt_reg0_out,
@@ -362,9 +365,9 @@ begin
 		DAC_set_result => Dac_set_result,
 		DAC_set_data => DAC_set_data,
 		min_set_result_en => min_set_result_en,
-		min_set_result => min_set_result
+		min_set_result => min_set_result,
 --		alt_begin => alt_begin,
---		chopper_ctrl => chopper_ctrl
+		chopper_ctrl => chopper_ctrl
 	);
 	lut_ram_128_data	<= lut_ram_128_data_sig;
 end Behavioral;
