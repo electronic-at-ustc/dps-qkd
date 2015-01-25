@@ -60,7 +60,7 @@ port(
 		delay_AM1						: in	std_logic_vector(31 downto 0);
 --		delay_AM2						: in	std_logic_vector(4 downto 0);
 --		delay_PM 						: in	std_logic_vector(4 downto 0);
-		
+		rnd_data_store_en	: in std_logic;
 		serial_fifo_rdy				:  out std_logic;--fifo has spare space
 		iodelay_ctrl_rdy				:  out std_logic;
 		
@@ -490,7 +490,7 @@ process (valid2,dout2,delay_AM1,test_signal_delay_reg,exp_running)
 				send_write_back_data(31 downto 0) <= send_write_data(127 downto 96);
 			end if;
 			
-			send_write_back_en	<= send_write_en_ds(6) or send_write_en_ds(5) or send_write_en_ds(4) or send_write_en_ds(3);
+			send_write_back_en	<= (send_write_en_ds(6) or send_write_en_ds(5) or send_write_en_ds(4) or send_write_en_ds(3)) and rnd_data_store_en;
 		end if;
 	end process;
 	
