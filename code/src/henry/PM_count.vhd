@@ -47,6 +47,7 @@ port(
 		--tdc_count_time_value	:	in	std_logic_vector(31 downto 0);
 		---from dac-----------------------------------
 		dac_finish   :	in	std_logic;
+		pm_data_store_en	: in std_logic;
 		---count out to alt
 		offset_voltage		: in std_logic_vector(11 downto 0);--offset_voltage
 		half_wave_voltage	: in std_logic_vector(11 downto 0);--half_wave_voltage
@@ -77,6 +78,7 @@ port(
 		lut_ram_128_data : in STD_LOGIC_vector(11 downto 0);
 		
 		----alg result------
+		chopper_ctrl 		: in std_logic;
 		result_ok 		: in std_logic;
 		one_time_end		: in std_logic;
 		DAC_set_addr   : in std_logic_vector(6 downto 0);
@@ -268,7 +270,12 @@ begin
 					alg_data_wr					<= '1';
 					alg_data_wr_data			<=	x"B00000" & "0" & lut_ram_128_addr & x"0" & lut_ram_128_data;
 				else
-					alg_data_wr					<= '0';
+					if(one_time_end = '1' and pm_data_store_en = '1') then
+						alg_data_wr					<= '1';
+						alg_data_wr_data			<=	x"C00" & "00" & min_cnt & "0" & DAC_set_addr & x"0" & min_dac;
+					else
+						alg_data_wr					<= '0';
+					end if;
 				end if;
 			end if;
 		end if;
@@ -284,7 +291,7 @@ begin
 		min_set_result_en	<= '0';
 	elsif rising_edge(sys_clk_80M) then
 		min_set_result_en	<= one_time_end;
-		if(wait_finish_reg = '1' and wait_dac_cnt /= 0) then ---10 counter
+		if(wait_finish_reg = '1' and wait_dac_cnt /= 0 and chopper_ctrl = '1') then ---10 counter
 			if(use_4apd = '1') then
 				if(apd_cnt_reg(0) < min_cnt) then
 					min_cnt	<= apd_cnt_reg(0);
@@ -296,7 +303,7 @@ begin
 					min_dac	<= dac_set_data;
 				end if;
 			end if;
-		elsif(one_time_end = '1') then
+		elsif(one_time_end = '1' or chopper_ctrl = '0') then
 			min_set_result	<= min_dac;
 			min_cnt			<= (others => '1');
 		end if;
