@@ -40,6 +40,7 @@ port(
 	-- fix by herry make sys_clk_80M to sys_clk_160M
 	   sys_clk_80M		:	in	std_logic;--system clock,80MHz
 		sys_rst_n		:	in	std_logic;--system reset,low active
+		fifo_rst			:	in	std_logic;--system reset,low active
 		---apd interface
 		apd_fpga_hit	: 	in	std_logic_vector(tdc_chl_num-1 downto 0);--apd pulse input
 		---tdc module
@@ -107,6 +108,8 @@ signal apd_fpga_hit_1d		: std_logic_vector(1 downto 0);
 signal apd_fpga_hit_2d		: std_logic_vector(1 downto 0); 
 signal hit_cnt_en				: std_logic_vector(1 downto 0); 
 
+signal lut_ram_128_cnt		: std_logic_vector(19 downto 0); 
+
 signal 		chnl_cnt_reg0	:  std_logic_vector(9 downto 0);
 signal 		chnl_cnt_reg1	:  std_logic_vector(9 downto 0);
 signal 		chnl_cnt_reg2	:  std_logic_vector(9 downto 0);
@@ -162,7 +165,6 @@ begin
 		end if;
 	end if;
 end process;
-
 wait_finish_pro: process(sys_clk_80M,sys_rst_n)
 begin
 if(sys_rst_n = '0' ) then-------------
@@ -176,6 +178,16 @@ elsif rising_edge(sys_clk_80M) then
 end if;
 end process;
 
+process(sys_clk_80M,sys_rst_n, fifo_rst)
+begin
+if(sys_rst_n = '0' or fifo_rst = '1' ) then-------------
+	lut_ram_128_cnt	<=	(others => '0');    
+elsif rising_edge(sys_clk_80M) then
+	if(lut_ram_128_vld = '1')then 
+		lut_ram_128_cnt	<=	lut_ram_128_cnt + 1;
+	end if;
+end if;
+end process;
 ---******* detect rising of the 'apd_fpga_hit' ***
 ---two beat delay
 delay_hit : process(sys_clk_80M,sys_rst_n)
@@ -268,7 +280,7 @@ begin
 			else
 				if(lut_ram_128_vld = '1') then
 					alg_data_wr					<= '1';
-					alg_data_wr_data			<=	x"B00000" & "0" & lut_ram_128_addr & x"0" & lut_ram_128_data;
+					alg_data_wr_data			<=	x"B" & lut_ram_128_cnt & "0" & lut_ram_128_addr & x"0" & lut_ram_128_data;
 				else
 					if(one_time_end = '1' and pm_data_store_en = '1') then
 						alg_data_wr					<= '1';
