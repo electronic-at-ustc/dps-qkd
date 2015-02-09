@@ -172,7 +172,11 @@ begin
 	elsif(Sys_clk' event and Sys_clk = '1') then
 		if( rnd_gen_cnt_set = '1' and WNG_Clk_rising = '1') then
 			if(test_rnd = '1') then
-				fifo_din		<= test_rnd_data & test_rnd_data;--rnd_num_cnt;
+				if(test_rnd_data = x"FFFF") then
+					fifo_din		<= rnd_num_cnt;--rnd_num_cnt;
+				else
+					fifo_din		<= test_rnd_data & test_rnd_data;--rnd_num_cnt;
+				end if;
 			else
 				fifo_din		<= rnd_data;
 			end if;
@@ -186,13 +190,16 @@ end process;
 process(Sys_clk, sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		rnd_num_cnt	<= (others => '0');
+		rnd_num_cnt	<= x"00010203";
 	elsif(Sys_clk' event and Sys_clk = '1') then
 		if( fifo_wr_en = '1') then
-			rnd_num_cnt		<= rnd_num_cnt + 1;
+			rnd_num_cnt(7 downto 0)			<= rnd_num_cnt(7 downto 0) + 4;
+			rnd_num_cnt(15 downto 8)		<= rnd_num_cnt(15 downto 8) + 4;
+			rnd_num_cnt(23 downto 16)		<= rnd_num_cnt(23 downto 16) + 4;
+			rnd_num_cnt(31 downto 24)		<= rnd_num_cnt(31 downto 24) + 4;
 		else
 			if(fifo_clr = '1') then
-				rnd_num_cnt	<= (others => '0');
+				rnd_num_cnt	<= x"00010203";
 			else
 				null;
 			end if;
