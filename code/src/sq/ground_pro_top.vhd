@@ -219,7 +219,7 @@ architecture Behavioral of ground_pro_top is
 --		sys_clk_60M : IN std_logic;
 		sys_rst_n : IN std_logic;
 		tdc_data_store_en : IN std_logic;
-		chopper_ctrl : IN std_logic;
+		APD_tdc_en : IN std_logic;
 		HitIn_p : IN std_logic_vector(tdc_chl_num downto 1);
 		HitIn_n : IN std_logic_vector(tdc_chl_num downto 1);
 		cpldif_tdc_addr : IN std_logic_vector(7 downto 0);
@@ -298,7 +298,7 @@ architecture Behavioral of ground_pro_top is
 		Rnd_Gen_WNG_Oe_n : OUT std_logic_vector(3 downto 0);
 		tdc_data_store_en				: out  STD_LOGIC;
 		chopper_ctrl					: out  STD_LOGIC;
-		chopper_ctrl_80M				: out  STD_LOGIC;
+		APD_tdc_en						: out  STD_LOGIC;
 		----for Bob
 		syn_light_sel		:	out	std_logic;
 		syn_light_ext		:	in	std_logic;
@@ -372,7 +372,7 @@ architecture Behavioral of ground_pro_top is
 	signal tdc_data_store_en	:	std_logic;
 	signal tdc_count_hit : std_logic_vector(tdc_chl_num-1 downto 0);	
 	-------------------------------------------------------	
-	signal chopper_ctrl_80M	:	std_logic;
+	signal APD_tdc_en	:	std_logic;
 	signal qtel_clk_80M_out	:	std_logic;
 	signal qtel_clk_80M_delay_out	:	std_logic;
 	signal tdc_qtel_hit  : std_logic_vector(tdc_chl_num-1 downto 0);	
@@ -483,7 +483,7 @@ Tp(8)<= '0';--TP22
 		sys_rst_n => sys_rst_n,
 		HitIn_p => apd_fpga_hit_p,
 		HitIn_n => apd_fpga_hit_n,
-		chopper_ctrl => chopper_ctrl_80M,
+		APD_tdc_en => APD_tdc_en,
 		gps_pps => gps_pps,
 		exp_running => exp_running,
 		GPS_pulse_in => GPS_pulse_reg,
@@ -625,7 +625,7 @@ Tp(8)<= '0';--TP22
 		Rnd_Gen_WNG_Clk => Rnd_Gen_WNG_Clk,
 		Rnd_Gen_WNG_Oe_n => Rnd_Gen_WNG_Oe_n,
 		chopper_ctrl => chopper_ctrl,
-		chopper_ctrl_80M => chopper_ctrl_80M,
+		APD_tdc_en => APD_tdc_en,
 		GPS_pulse_int => GPS_pulse_int,
 		GPS_pulse_int_active => GPS_pulse_int_active,
 		----for Bob

@@ -297,6 +297,8 @@ Hit_En <= stepdata_tmp(0) and not Hit_d1;
  if(CLK'event and CLK='1')then
    if(Enable_tmp='1' and ChnlEnable_tmp='1')then
 		Chnlfifowrite <= fifo_write;
+	else
+		Chnlfifowrite <= '0';
    end if;
  end if;
  end process;

@@ -55,7 +55,8 @@ entity DPS_control is
 	  set_chopper_enable_cnt: in	std_logic_vector(31 downto 0);--for Bob
 	  set_chopper_disable_cnt: in	std_logic_vector(31 downto 0);--for Bob
 	  
-	  exp_running_250M		:  out std_logic;--80M clock domain
+	  APD_tdc_en				:  out std_logic;--80M clock domain
+	  exp_running_250M		:  out std_logic;--250M clock domain
 	  GPS_pulse_int			:  out std_logic;--80M clock domain
 	  GPS_pulse_int_active	:  out std_logic;--80M clock domain
 	  PPG_start					:  out std_logic;--250M clock domain
@@ -119,7 +120,7 @@ architecture Behavioral of DPS_control is
 	
 	
 begin
-	PPG_start	<= send_enable;
+	PPG_start	<= send_enable_250M;
 --generate gps pulse rise pulse
   process(sys_clk_80M, sys_rst_n) 
   begin 
@@ -133,6 +134,18 @@ begin
 			end if;
 		end if;
   end process;
+  
+  process(sys_clk_80M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			APD_tdc_en	<= '0';
+		else
+			if(sys_clk_80M'event and sys_clk_80M = '1') then
+				APD_tdc_en	<= send_en_AM_reg;
+			end if;
+		end if;
+  end process;
+  
   gps_pulse_r	<= (not gps_pulse_reg1) and gps_pulse_reg; 
   
   --generate chopper add
@@ -199,7 +212,7 @@ begin
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 			if(exp_running = '1') then
 				if(chopper_ctrl_reg = '0' and gps_count32 = set_send_enable_cnt and chopper_ctrl_cnt = 0) then
-					send_enable			<= Alice_H_Bob_L; --alice
+					send_enable			<= '1';--Alice_H_Bob_L; --alice
 				else
 					if(chopper_ctrl_reg = '1' and gps_count32 = set_send_disable_cnt and chopper_ctrl_cnt = 0) then
 						send_enable			<= '0'; 
@@ -374,9 +387,9 @@ begin
 		end if;
   end process;
   
-  process(syn_light_cnt, DPS_round_cnt_PM, DPS_round_cnt_PM_sub64) 
+  process(syn_light_cnt, DPS_round_cnt_PM, DPS_round_cnt_PM_sub64, Alice_H_Bob_L) 
   begin 
-		if(syn_light_cnt <= DPS_round_cnt_PM and syn_light_cnt > DPS_round_cnt_PM_sub64) then
+		if(syn_light_cnt <= DPS_round_cnt_PM and syn_light_cnt > DPS_round_cnt_PM_sub64 and Alice_H_Bob_L = '1') then
 			send_en_PM_reg	<= '1'; 
 		else
 			send_en_PM_reg	<= '0';
@@ -414,9 +427,9 @@ begin
 				DPS_round_cnt_reg		<= DPS_round_cnt;--x"61A7";
 				
 				DPS_round_cnt_AM		<= DPS_round_cnt_reg - DPS_send_AM_dly_cnt_reg;
-				DPS_round_cnt_PM		<= DPS_round_cnt_reg - DPS_send_PM_dly_cnt_reg;
+				DPS_round_cnt_PM		<= DPS_round_cnt_reg - 1000;
 				
-				DPS_round_cnt_AM_sub64	<= DPS_round_cnt_AM - 128;
+				DPS_round_cnt_AM_sub64	<= DPS_round_cnt_AM - 2000;
 				DPS_round_cnt_PM_sub64	<= DPS_round_cnt_PM - 64;--total is 128 pulse one clock cycle is 2 pulse 
 			end if;
 		end if;

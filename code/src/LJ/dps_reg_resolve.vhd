@@ -42,6 +42,7 @@ generic(
 		
 		test_signal_delay : out std_logic;
 		scan_data_store_en: out std_logic;
+		rdb_rnd_store_en	: out std_logic;
 		rnd_data_store_en	: out std_logic;
 		pm_data_store_en	: out std_logic;
 		tdc_data_store_en	: out std_logic;
@@ -169,6 +170,7 @@ begin
 		pm_steady_test	<= '0';---default is low
 		tdc_data_store_en	<= '0';
 		pm_data_store_en	<= '0';
+		rdb_rnd_store_en	<= '0';
 		rnd_data_store_en	<= '0';
 		scan_data_store_en<= '0';
 		test_signal_delay<= '0';
@@ -215,8 +217,9 @@ begin
 			
 			tdc_data_store_en	<= cpldif_dps_wr_data(9);
 			pm_data_store_en	<= cpldif_dps_wr_data(10);
-			rnd_data_store_en	<= cpldif_dps_wr_data(11);
+			rdb_rnd_store_en	<= cpldif_dps_wr_data(11);
 			scan_data_store_en<= cpldif_dps_wr_data(12);
+			rnd_data_store_en <= cpldif_dps_wr_data(13);
 		else
 			pm_steady_test	<= '0';
 		end if;
@@ -291,7 +294,7 @@ GPS_period_cnt	<= GPS_period_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		DPS_send_PM_dly_cnt_reg			<=	x"20";
+		DPS_send_PM_dly_cnt_reg			<=	x"F0";
 		DPS_send_AM_dly_cnt_reg			<=	x"00";
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"04" and cpldif_dps_wr_en = '1' ) then--GPS period count REG

@@ -245,9 +245,9 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for 200 us;
 		loop
 			GPS_pulse_in <= '0';
-			wait for 10 ms;
+			wait for 1 ms;
 			GPS_pulse_in <= '1';
-			wait for 10 ms;
+			wait for 1 ms;
 		end loop;
    end process;
 	apd_en_clk_process :process
@@ -448,7 +448,7 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait until rising_edge(cpld_fpga_clk);
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A3";
-		cpld_fpga_data <= x"800A0880";
+		cpld_fpga_data <= x"000A0880";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;

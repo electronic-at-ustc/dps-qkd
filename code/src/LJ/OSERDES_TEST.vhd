@@ -78,7 +78,8 @@ entity DPS_QKD is
 			
 			tdc_data_store_en	: out std_logic;
          chopper_ctrl				:  out  STD_LOGIC;
-			chopper_ctrl_80M			:  out  std_logic;--80M clock domain, 1: disable tdc, 0 enable tdc
+			APD_tdc_en				:  out std_logic;--80M clock domain
+--			chopper_ctrl_80M			:  out  std_logic;--80M clock domain, 1: disable tdc, 0 enable tdc
          syn_light					:  out  STD_LOGIC;
          PPG_start					:	OUT std_logic;--serial output enable
          PPG_clock					:	OUT std_logic;--10MHz
@@ -201,6 +202,8 @@ COMPONENT clock_manage
 		rnd_data_store_en : IN std_logic;
 		serial_fifo_wr_en : IN std_logic;
 		serial_fifo_wr_data : IN std_logic_vector(DATA_WIDTH*BURST_LEN-1 downto 0);
+		Alice_H_Bob_L					:	in std_logic;--serial output enable
+		send_enable						:	in std_logic;--serial output enable
 		send_en							:	in std_logic;--serial output enable
 		send_en_AM						:	in std_logic;--serial output enable
 		delay_load						:	in std_logic;--serial output enable
@@ -241,6 +244,7 @@ COMPONENT clock_manage
 		test_signal_delay: out std_logic;
 		scan_data_store_en: out std_logic;
 		rnd_data_store_en	: out std_logic;
+		rdb_rnd_store_en	: out std_logic;
 		pm_data_store_en	: out std_logic;
 		tdc_data_store_en	: out std_logic;
 		pm_steady_test 		: out std_logic;--80M clock domain
@@ -306,6 +310,7 @@ COMPONENT clock_manage
 		chopper_ctrl_80M : OUT std_logic;
 --		send_en_AM_p				:  out std_logic;--250M clock domain
 --	   send_en_AM_n				:  out std_logic;--250M clock domain
+		APD_tdc_en : OUT std_logic;
 		send_en_AM : OUT std_logic;
 		send_en : OUT std_logic
 		);
@@ -327,6 +332,7 @@ COMPONENT clock_manage
 		POC_fifo_wr_en : IN std_logic;
 		POC_fifo_wr_data : IN std_logic_vector(31 downto 0);
 --		chopper_contrl : IN std_logic;
+--		APD_tdc_en				:  out std_logic;--80M clock domain
 		Dac_Ena : OUT std_logic;
 		dac_data : OUT std_logic_vector(15 downto 0);
 		poc_test_en 			: in	std_logic;
@@ -350,6 +356,7 @@ COMPONENT clock_manage
 	PORT(
 		sys_clk_80M : IN std_logic;
 		sys_rst_n : IN std_logic;
+		fifo_rst			:	in	std_logic;
 		dac_finish : IN std_logic;
 		reg_wr : IN std_logic;
 		reg_wr_addr : IN std_logic_vector(3 downto 0);
@@ -418,6 +425,7 @@ signal SERIAL_OUT_p_reg		:	std_logic_vector(2 downto 0);--serial output
 signal SERIAL_OUT_n_reg		:	std_logic_vector(2 downto 0);--serial output
 
 signal		scan_data_store_en: std_logic;
+signal		rdb_rnd_store_en	: std_logic;
 signal		rnd_data_store_en	: std_logic;
 signal		pm_data_store_en	: std_logic;
 
@@ -434,6 +442,7 @@ signal	test_rnd             	:  std_logic;
 signal	delay_load              :  std_logic;
 ----
 signal	chopper_ctrl_sig        :  std_logic;
+signal	send_enable             :  std_logic;
 signal	send_en                 :  std_logic;
 signal	send_en_AM              :  std_logic;
 
@@ -468,7 +477,6 @@ signal		random_fifo_rd_data 	: std_logic_vector(DATA_WIDTH*BURST_LEN-1 downto 0)
 signal		serial_fifo_wr_en 	:  std_logic;
 signal		serial_fifo_wr_data 	:  std_logic_vector(DATA_WIDTH*BURST_LEN-1 downto 0);
 signal		random_fifo_rd_en 	:  std_logic;
-signal		send_enable 	:  std_logic;
 signal		temp_out_p 	:  std_logic;
 signal		temp_out_n 	:  std_logic;
 
@@ -591,11 +599,12 @@ PORT MAP(
 		serial_fifo_rd_clk => sys_clk_250m,--167M 500M/3
 		serial_out_clk => sys_clk_500M,--500M
 		serial_fifo_wr_en => serial_fifo_wr_en,
+		Alice_H_Bob_L => Alice_H_Bob_L,
 		serial_fifo_wr_data => serial_fifo_wr_data,
 		send_write_prepare => send_write_prepare,
 		send_write_back_en => send_write_back_en,
 		send_write_back_data => send_write_back_data,
-		rnd_data_store_en => rnd_data_store_en,
+		rnd_data_store_en => rdb_rnd_store_en,
 		send_en => send_en,
 		send_en_AM => send_en_AM,
 		delay_load => delay_load,
@@ -607,6 +616,7 @@ PORT MAP(
 		delay_AM1_out => delay_AM1_out,
 --		delay_AM2_out => delay_AM2_out,
 --		delay_PM_out => delay_PM_out,
+		send_enable => send_enable,
 		send_en_AM_p => send_en_AM_p,
 		send_en_AM_n => send_en_AM_n,
 		SERIAL_OUT_p => SERIAL_OUT_p_reg,
@@ -634,6 +644,7 @@ PORT MAP(
 		delay_AM1 => delay_AM1,
 		GPS_period_cnt => GPS_period_cnt,
 		scan_data_store_en => scan_data_store_en,
+		rdb_rnd_store_en => rdb_rnd_store_en,
 		rnd_data_store_en => rnd_data_store_en,
 		pm_data_store_en => pm_data_store_en,
 		tdc_data_store_en => tdc_data_store_en,
@@ -672,6 +683,7 @@ PORT MAP(
 		gps_pulse => gps_pps,
 		GPS_period_cnt => GPS_period_cnt,
 		GPS_pulse_int => GPS_pulse_int,
+		APD_tdc_en => APD_tdc_en,
 		GPS_pulse_int_active => GPS_pulse_int_active,
 		DPS_syn_dly_cnt => DPS_syn_dly_cnt,
 		DPS_send_PM_dly_cnt => DPS_send_PM_dly_cnt,
@@ -691,7 +703,7 @@ PORT MAP(
 		send_en_AM => send_en_AM,
 		send_en => send_en
 	);
-	chopper_ctrl_80M	<= chopper_ctrl_sig;
+--	chopper_ctrl_80M	<= chopper_ctrl_sig;
 	Inst_POC_output_control: POC_output_control PORT MAP(
 		sys_clk => sys_clk,
 		sys_rst_n => sys_rst_n,
@@ -735,6 +747,7 @@ PORT MAP(
 	Inst_PM_receive: PM_receive PORT MAP(
 		sys_clk_80M => sys_clk,
 		sys_rst_n => sys_rst_n,
+		fifo_rst => fifo_clr,
 		dac_finish => dac_finish,
 		Dac_Ena => pm_dac_en,
 		dac_data => pm_dac_data,

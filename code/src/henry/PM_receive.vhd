@@ -37,6 +37,7 @@ port(
 	-- 
 	   sys_clk_80M	:	in	std_logic;--system clock,80MHz
 		sys_rst_n	:	in	std_logic;--system reset,low active
+		fifo_rst			:	in	std_logic;
 --		----dac interface--
 		--Dac_Finish_out : out  STD_LOGIC;	--it has output 16 bit data
 --		Dac_Sclk   : out  STD_LOGIC; --DAC chip clock
@@ -128,7 +129,7 @@ architecture Behavioral of PM_receive      is
 		offset_voltage : in std_logic_vector(11 downto 0);
 		------
 		result_ok : OUT std_logic;
-		DAC_set_addr   : out std_logic_vector(6 downto 0);
+		DAC_set_addr   : in std_logic_vector(6 downto 0);
 		DAC_set_result : OUT std_logic_vector(11 downto 0)
 		);
 	END COMPONENT;
@@ -185,6 +186,7 @@ architecture Behavioral of PM_receive      is
 	PORT(
 		sys_clk_80M : IN std_logic;
 		sys_rst_n : IN std_logic;
+		fifo_rst			:	in	std_logic;
 		apd_fpga_hit : IN std_logic_vector(1 downto 0);
 		--tdc_count_time_value : IN std_logic_vector(31 downto 0);
 		dac_finish : IN std_logic;  
@@ -296,6 +298,7 @@ begin
 		min_set_result => min_set_result
 	);
 	dac_data	<= DAC_set_data;
+	POC_ctrl <= DAC_set_addr;
 	Inst_PM_control: PM_control PORT MAP(
 		sys_clk_80M => sys_clk_80M,
 		sys_rst_n => sys_rst_n,
@@ -313,7 +316,7 @@ begin
 		wait_count => wait_count,
 		wait_finish => wait_finish,
 		wait_dac_cnt => wait_dac_cnt,
-		POC_ctrl => POC_ctrl,
+		POC_ctrl => DAC_set_addr,
 		POC_ctrl_en => POC_ctrl_en,
 		addr_reset => addr_reset,
 		alt_begin => alt_begin,
@@ -330,6 +333,7 @@ begin
 	Inst_PM_count: PM_count PORT MAP(
 		sys_clk_80M => sys_clk_80M,
 		sys_rst_n => sys_rst_n,
+		fifo_rst => fifo_rst,
 		apd_fpga_hit => apd_fpga_hit,
 		dac_finish => dac_finish,
 		use_8apd => use_8apd,

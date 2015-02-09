@@ -44,6 +44,7 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
          sys_clk_80M : IN  std_logic;
          sys_rst_n : IN  std_logic;
          dac_finish : IN  std_logic;
+         fifo_rst : IN  std_logic;
          Dac_Ena : OUT  std_logic;
          dac_data : OUT  std_logic_vector(11 downto 0);
          POC_ctrl : OUT  std_logic_vector(6 downto 0);
@@ -51,6 +52,7 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
 			pm_steady_test : IN std_logic;
 			scan_data_store_en : in  STD_LOGIC; 
 			pm_data_store_en : in  STD_LOGIC; 
+         lut_ram_128_vld : IN  std_logic;
          reg_wr : IN  std_logic;
          reg_wr_addr : IN  std_logic_vector(3 downto 0);
          reg_wr_data : IN  std_logic_vector(15 downto 0);
@@ -69,9 +71,11 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
    --Inputs
    signal sys_clk_80M : std_logic := '0';
    signal sys_rst_n : std_logic := '0';
+   signal fifo_rst : std_logic := '0';
    signal dac_finish : std_logic := '0';
    signal reg_wr : std_logic := '0';
    signal pm_steady_test : std_logic := '0';
+   signal lut_ram_128_vld : std_logic := '0';
    signal scan_data_store_en : std_logic := '0';
    signal pm_data_store_en : std_logic := '0';
    signal reg_wr_addr : std_logic_vector(3 downto 0) := (others => '0');
@@ -103,6 +107,8 @@ BEGIN
    uut: PM_receive PORT MAP (
           sys_clk_80M => sys_clk_80M,
           sys_rst_n => sys_rst_n,
+          fifo_rst => fifo_rst,
+          lut_ram_128_vld => lut_ram_128_vld,
           dac_finish => dac_finish,
           Dac_Ena => Dac_Ena,
           dac_data => dac_data,

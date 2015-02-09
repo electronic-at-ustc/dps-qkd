@@ -19,7 +19,7 @@ port (
 			sys_clk	:	in std_logic;-----------80M
 --			sys_clk_60M	:	in std_logic;-----------60M
 			sys_rst_n : in std_logic;
-			chopper_ctrl : in std_logic;
+			APD_tdc_en : in std_logic;
 			tdc_data_store_en : in std_logic;
 			GPS_pulse_in : in std_logic;
 			syn_light_in	: in  STD_LOGIC;
@@ -502,8 +502,10 @@ begin
 			null;
 		end if;
 		tdc_reg_channel_en		<=	tdc_reg_channel_en_tmp;
-		tdc_reg_channel_en(2)	<=	tdc_reg_channel_en_tmp(2) and (not chopper_ctrl);
-		tdc_reg_channel_en(3)	<=	tdc_reg_channel_en_tmp(3) and (not chopper_ctrl);	
+		tdc_reg_channel_en(0)	<=	'1';
+		tdc_reg_channel_en(1)	<=	'1';
+		tdc_reg_channel_en(2)	<=	APD_tdc_en;
+		tdc_reg_channel_en(3)	<=	APD_tdc_en;	
 	end if;
 end process;
 
@@ -1278,11 +1280,7 @@ Chnl_4_inst: singlechnl
 --			  '0';
 
 process(RdFifoWren, WrEn_tmp) begin
-if(RdFifoWren = 0) then
-	WrEn_tmp <= '0';
-else
-	WrEn_tmp <= '1';
-end if;
+	WrEn_tmp <= RdFifoWren(0) or RdFifoWren(1) or  RdFifoWren(2) or RdFifoWren(3);
 end process;
 		  
 ------------------------------------------------------------------------------------------------------

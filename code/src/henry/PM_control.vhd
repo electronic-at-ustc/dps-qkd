@@ -106,7 +106,7 @@ architecture Behavioral of PM_control is
 --
 
 --signal pr_state,nx_state : state;
-signal poc_count   : std_logic_vector(7 downto 0);
+signal poc_count   : std_logic_vector(6 downto 0);
 signal set_count   : std_logic_vector(7 downto 0);
 signal config_reg0 : std_logic_vector(11 downto 0);
 signal config_reg1 : std_logic_vector(11 downto 0);
@@ -123,7 +123,7 @@ signal scan_inc_cnt_reg	: std_logic_vector(7 downto 0);
 signal pm_stable_cnt_reg	: std_logic_vector(15 downto 0);
 signal poc_stable_cnt_reg 	: std_logic_vector(15 downto 0);
 signal count_time_reg 		: std_logic_vector(15 downto 0);
-signal step_cnt		 		: std_logic_vector(7 downto 0);
+signal poc_cnt_set	 		: std_logic_vector(6 downto 0);
 --signal use_apd4            : std_logic_vector(1 downto 0);
 --signal use_apd8            : std_logic_vector(1 downto 0);
 --signal dac_start   : std_logic;
@@ -131,6 +131,7 @@ signal step_cnt		 		: std_logic_vector(7 downto 0);
 --signal poc_count :	std_logic_vector(2 downto 0);
 --signal set_count	 : std_logic_vector(7 downto 0);
 --signal set_onetime : std_logic;
+signal add_L_sub_H : std_logic;
 signal wait_stable_H_count_L : std_logic;
 signal add_set_count : std_logic;
 signal set_onetime_end : std_logic;
@@ -186,14 +187,16 @@ begin
 		config_reg3<=	x"6B8"; --:-0.4V
 		count_time_reg<=	X"01F4";--100us
 		pm_stable_cnt_reg<=	x"000F";--3us
-		poc_stable_cnt_reg<=	x"0005";--1us  A7
-		scan_inc_cnt_reg <=	x"1F";--
-		offset_voltage_reg<=	x"BD7";--  -1.5V
-		half_wave_voltage_reg<=	x"385";--1.1V
-		minus_voltage<=	"001" & x"48";--
-		step_cnt_reg	<=	x"33";--
+		poc_stable_cnt_reg<=	x"0019";--5us  
+		scan_inc_cnt_reg <=	x"14";--
+		offset_voltage_reg<=	x"999";--  -1.5V
+		half_wave_voltage_reg<=	x"547";--1.1V
+		minus_voltage<=	"010" & x"80";--
+		step_cnt_reg	<=	x"83";--
+		poc_cnt_set	<=	"0000000";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
+		add_L_sub_H	<= '0';
 	elsif rising_edge(sys_clk_80M) then		
 		config_reg3	  <= ('1' & half_wave_voltage_reg(10 downto 0)) - offset_voltage_reg(10 downto 0);
 		config_reg2	  <= config_reg3 - half_wave_voltage_reg(11 downto 1);
@@ -238,6 +241,10 @@ begin
 			if(reg_wr_addr = 11)then
 				minus_voltage <=	reg_wr_data(10 downto 0);
 			end if;
+			if(reg_wr_addr = 12)then
+				poc_cnt_set <=	reg_wr_data(6 downto 0);
+				add_L_sub_H	<= reg_wr_data(8);
+			end if;
 		else
 			null;
 		end if;
@@ -249,14 +256,20 @@ end process;
   process(sys_clk_80M, sys_rst_n, chopper_ctrl_rising) 
   begin 
 		if(sys_rst_n = '0') then
-			poc_count	<= (others => '0');
+			poc_count	<= poc_cnt_set;
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
-			if(chopper_ctrl_rising = '1' and pm_data_store_en = '1') then
-				poc_count	<= x"7F";
-			elsif(pm_steady_test_rising = '1') then
-				poc_count	<= x"7F";
-			elsif(set_onetime_end = '1' and poc_count > 0) then
-				poc_count 	<= poc_count - '1'; 
+			if((chopper_ctrl_rising = '1' and pm_data_store_en = '1') or pm_steady_test_rising = '1') then
+				if(add_L_sub_H = '0') then
+					poc_count	<= poc_cnt_set + '1';
+				else
+					poc_count	<= poc_cnt_set - '1';
+				end if;
+			elsif(set_onetime_end = '1' and poc_count /= poc_cnt_set) then
+				if(add_L_sub_H = '0') then
+					poc_count 	<= poc_count + '1';
+				else
+					poc_count 	<= poc_count - '1';
+				end if;
 			else
 				poc_count	<= poc_count;
 			end if;
@@ -264,7 +277,7 @@ end process;
   end process;
   
   process(set_onetime_end, poc_count) begin
-	  if(set_onetime_end = '1' and poc_count = 0) then
+	  if(set_onetime_end = '1' and poc_count = poc_cnt_set) then
 			complete	<= '1';
 	  else
 			complete	<= '0';
@@ -280,7 +293,7 @@ end process;
 			POC_ctrl_en <= '0';
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 				if(wait_start_reg = '1' and set_count = x"01") then
-					POC_ctrl <= 127-poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
+					POC_ctrl <= poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
 					POC_ctrl_en <= '1';
 				else
 --					POC_ctrl	<= POC_ctrl;

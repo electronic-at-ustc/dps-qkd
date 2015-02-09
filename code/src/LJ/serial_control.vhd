@@ -56,7 +56,9 @@ port(
 		
 		exp_running						:	in std_logic;--serial output enable
 		send_en							:	in std_logic;--serial output enable
+		Alice_H_Bob_L					:	in std_logic;--serial output enable
 		send_en_AM						:	in std_logic;--serial output enable
+		send_enable						:	in std_logic;--serial output enable
 		delay_AM1						: in	std_logic_vector(31 downto 0);
 --		delay_AM2						: in	std_logic_vector(4 downto 0);
 --		delay_PM 						: in	std_logic_vector(4 downto 0);
@@ -170,6 +172,7 @@ signal 	serial_AM1	: 	std_logic;
 signal 	serial_AM2	: 	std_logic;
 signal 	sys_rst_h	: 	std_logic;
 
+signal 	Out_clk				: 	std_logic;
 signal 	send_en_AM_d1				: 	std_logic;
 signal 	send_en_80M_d1				: 	std_logic;
 signal 	send_en_80M_d2				: 	std_logic;
@@ -307,6 +310,14 @@ end generate;
       I => serial_out_clk      -- Buffer input 
    );
 	
+--	BUFGMUX_inst : BUFGMUX
+--   port map (
+--      O => Out_clk,   -- 1-bit output: Clock buffer output
+--      I0 => '0', -- 1-bit input: Clock buffer input (S=0)
+--      I1 => serial_out_clk, -- 1-bit input: Clock buffer input (S=1)
+--      S => send_enable    -- 1-bit input: Clock buffer select
+--   );
+--	
 --	AM1_clk <= delay_out(3) xor delay_out(4);
 --	AM2_clk <= delay_out(3) xor delay_out(5);
 	
@@ -459,7 +470,7 @@ process (valid2,dout2,delay_AM1,test_signal_delay_reg,exp_running)
 			send_write_prepare<= '0';
 			send_write_back_data(31 downto 0)	<= (others => '0');
 		elsif (serial_fifo_wr_clk'event and serial_fifo_wr_clk = '1') then
-			send_en_80M_d1	<= send_en_AM;
+			send_en_80M_d1	<= send_en_AM and Alice_H_Bob_L;
 			send_en_80M_d2	<= send_en_80M_d1;
 			if(send_en_80M_d1 = '0' and send_en_80M_d2 = '1') then---falling edge
 				send_write_en	<= '1';
