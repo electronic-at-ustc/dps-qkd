@@ -65,6 +65,7 @@ entity DPS_control is
 	  chopper_ctrl_80M		:  out std_logic;--80M clock domain
 --	  send_en_AM_p				:  out std_logic;--250M clock domain
 --	  send_en_AM_n				:  out std_logic;--250M clock domain
+	  syn_light_ext			:  in std_logic;--250M clock domain
 	  syn_light					:  out std_logic;--250M clock domain
 	  send_en_AM				:  out std_logic;--250M clock domain
 	  send_en					:  out std_logic--250M clock domain
@@ -88,6 +89,8 @@ architecture Behavioral of DPS_control is
 --	signal chopper_ctrl_d1	: std_logic;
 --	signal chopper_ctrl_80M_reg	: std_logic;
 	signal chopper_ctrl_cnt	: std_logic_vector(3 downto 0);
+	signal chopper_time_cnt	: std_logic_vector(30 downto 0);
+--	signal chopper_time_set	: std_logic_vector(31 downto 0);
 --	signal DPS_chopper_cnt_reg	: std_logic_vector(3 downto 0);
 	
 	signal syn_light_sig			: std_logic;
@@ -106,6 +109,12 @@ architecture Behavioral of DPS_control is
 	signal send_en_AM_reg 			: std_logic;
 	signal send_en_PM_reg 			: std_logic;
 	signal pm_steady_enable			: std_logic;
+	
+	signal send_enable_d1				: std_logic;
+	signal is_send_first_syn			: std_logic;
+	signal is_send_first_syn_r			: std_logic;
+	signal is_send_first_syn_d1		: std_logic;
+	signal detect_first_syn_en			: std_logic;
 	
 	signal DPS_round_cnt_reg	: std_logic_vector(15 downto 0);
 	
@@ -149,93 +158,52 @@ begin
   gps_pulse_r	<= (not gps_pulse_reg1) and gps_pulse_reg; 
   
   --generate chopper add
- process(exp_running, gps_pulse_r) 
-  begin 
-		if(exp_running = '1' and gps_pulse_r = '1' ) then
-			chopper_ctrl_add	<= '1';
-		else
-			chopper_ctrl_add	<= '0';
-		end if;
-  end process;
-  
-  process(sys_clk_80M, sys_rst_n) 
-  begin 
-		if(sys_rst_n = '0') then
-			chopper_ctrl_cnt		<= (others => '1');
-		else
-			if(sys_clk_80M'event and sys_clk_80M = '1') then
-				if(exp_running = '1') then
-					if(chopper_ctrl_add = '1') then
-						if(chopper_ctrl_cnt < DPS_chopper_cnt) then
-							chopper_ctrl_cnt	<= chopper_ctrl_cnt + 1;
-						else
-							chopper_ctrl_cnt		<= (others => '0');
-						end if;
-					end if;
-				else
-					chopper_ctrl_cnt		<= (others => '0');
-				end if;
-			end if;
-		end if;
-  end process;
 
   process(sys_clk_80M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
-			chopper_ctrl_reg			<= '0';
 			exp_running_d1				<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
 				exp_running_d1	<= exp_running;
-				if(exp_running = '1') then
-					if(exp_running_d1 = '0') then--rising edge
-						chopper_ctrl_reg			<= '1';
-					else
-						if(chopper_ctrl_add = '1' and chopper_ctrl_cnt = DPS_chopper_cnt) then
-							chopper_ctrl_reg			<= not chopper_ctrl_reg;
-						end if;
-					end if;
-				else
-					chopper_ctrl_reg			<= '0';
-				end if;
 			end if;
 		end if;
   end process;
 --  chopper_ctrl	<= chopper_ctrl_reg;
   
   --generate send_enable
-  process(sys_clk_80M, sys_rst_n) 
-  begin 
-		if(sys_rst_n = '0') then
-			send_enable	<= '0'; 
-			pm_steady_enable	<= '0'; 
-		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
-			if(exp_running = '1') then
-				if(chopper_ctrl_reg = '0' and gps_count32 = set_send_enable_cnt and chopper_ctrl_cnt = 0) then
-					send_enable			<= '1';--Alice_H_Bob_L; --alice
-				else
-					if(chopper_ctrl_reg = '1' and gps_count32 = set_send_disable_cnt and chopper_ctrl_cnt = 0) then
-						send_enable			<= '0'; 
-					else
-						null;
-					end if;
-				end if;
-				
-				if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl_reg = '1' and chopper_ctrl_cnt = 0) then
-					pm_steady_enable		<= not Alice_H_Bob_L;---Alice do not need this signal
-				else
-					if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
-						pm_steady_enable		<= '0';
-					else
-						null;
-					end if;
-				end if;
-			else
-				send_enable			<= '0'; 
-				pm_steady_enable	<= '0';
-			end if;
-		end if;
-  end process;
+--  process(sys_clk_80M, sys_rst_n) 
+--  begin 
+--		if(sys_rst_n = '0') then
+--			send_enable	<= '0'; 
+--			pm_steady_enable	<= '0'; 
+--		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
+--			if(exp_running = '1') then
+--				if(chopper_ctrl_reg = '0' and gps_count32 = set_send_enable_cnt and chopper_ctrl_cnt = 0) then
+--					send_enable			<= '1';--Alice_H_Bob_L; --alice
+--				else
+--					if(chopper_ctrl_reg = '1' and gps_count32 = set_send_disable_cnt and chopper_ctrl_cnt = 0) then
+--						send_enable			<= '0'; 
+--					else
+--						null;
+--					end if;
+--				end if;
+--				
+--				if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl_reg = '1' and chopper_ctrl_cnt = 0) then
+--					pm_steady_enable		<= not Alice_H_Bob_L;---Alice do not need this signal
+--				else
+--					if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
+--						pm_steady_enable		<= '0';
+--					else
+--						null;
+--					end if;
+--				end if;
+--			else
+--				send_enable			<= '0'; 
+--				pm_steady_enable	<= '0';
+--			end if;
+--		end if;
+--  end process;
   
   ---generate 80M domain chopper_ctrl
   ---for Bob
@@ -277,25 +245,98 @@ begin
 			end if;
 		end if;
   end process;
---  process(sys_clk_80M, sys_rst_n) 
---  begin 
---		if(sys_rst_n = '0') then
---			chopper_ctrl		<= '0';
---		else
---			if(sys_clk_80M'event and sys_clk_80M = '1') then
---				if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl = '1' and chopper_ctrl_cnt = 0) then
---					chopper_ctrl		<= exp_running;---Alice do not need this signal
---				else
---					if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
---						chopper_ctrl		<= '0';
---					else
---						null;
---					end if;
---				end if;
---			end if;
---		end if;
---  end process;
+  process(sys_clk_80M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			detect_first_syn_en		<= '0';
+			is_send_first_syn			<= '0';
+			is_send_first_syn_r		<= '0';
+			is_send_first_syn_d1		<= '0';
+		else
+			if(sys_clk_80M'event and sys_clk_80M = '1') then
+				is_send_first_syn			<= detect_first_syn_en and syn_light_ext;
+				is_send_first_syn_d1		<= is_send_first_syn;
+				is_send_first_syn_r		<= is_send_first_syn and (not is_send_first_syn_d1);--rising edge
+				if(send_enable = '1' and send_enable_d1 = '0') then
+					detect_first_syn_en		<= '1';
+				else
+					if(syn_light_ext = '1') then
+						detect_first_syn_en		<= '0';
+					else
+						null;
+					end if;
+				end if;
+			end if;
+		end if;
+  end process;
   ---generate internal gps pulse 
+  process (sys_clk_80M)
+	begin  
+		if (sys_clk_80M'event and sys_clk_80M = '1') then
+--			if(exp_running_d1 = '0' and exp_running = '1') then --rising edge
+--				chopper_time_cnt	<= (others => '0');
+--			else
+				if (exp_running = '1') then
+					if(is_send_first_syn_r = '1') then---每一个round如果看见发射端第一个同步光脉冲，则将接收端计数调整1次
+						chopper_time_cnt	<= set_send_enable_cnt(30 downto 0) + DPS_syn_dly_cnt_reg;
+					else
+						if(chopper_time_cnt < GPS_period_cnt(30 downto 0)) then
+							chopper_time_cnt	<= chopper_time_cnt + 1;
+						else
+							chopper_time_cnt	<= (others => '0');
+						end if;
+					end if;
+				else
+					chopper_time_cnt	<= (others => '0');
+				end if;
+--			end if;	
+		end if;
+	end process;
+	-----
+	process(sys_clk_80M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			chopper_ctrl_reg		<= '0';
+		else
+			if(sys_clk_80M'event and sys_clk_80M = '1') then
+--				if(Alice_H_Bob_L = '1') then
+					if(chopper_time_cnt > set_chopper_enable_cnt ) then
+						chopper_ctrl_reg		<= '1';
+					else
+						if(chopper_time_cnt > set_chopper_disable_cnt) then
+							chopper_ctrl_reg		<= '0';
+						else
+							chopper_ctrl_reg		<= chopper_ctrl_reg;
+						end if;
+					end if;
+--				end if;
+			end if;
+		end if;
+  end process;
+  
+  process(sys_clk_80M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			send_enable		<= '0';
+		else
+			if(sys_clk_80M'event and sys_clk_80M = '1') then
+				if(Alice_H_Bob_L = '1') then
+					if(chopper_time_cnt >= set_send_enable_cnt ) then
+						send_enable		<= '1';
+					else
+						if(chopper_time_cnt > set_send_disable_cnt) then
+							send_enable		<= '0';
+						else
+							send_enable		<= send_enable;
+						end if;
+					end if;
+				else
+					send_enable		<= '0';
+				end if;
+			end if;
+		end if;
+  end process;
+  
   process (sys_clk_80M)
 	begin  
 		if (sys_clk_80M'event and sys_clk_80M = '1') then

@@ -290,6 +290,7 @@ COMPONENT clock_manage
 		exp_running : IN std_logic;
 		Alice_H_Bob_L : IN std_logic;
 		gps_pulse : IN std_logic;
+		syn_light_ext : IN std_logic;
 --		pm_steady_test 		: in std_logic;--80M clock domain
 		DPS_send_PM_dly_cnt : IN std_logic_vector(7 downto 0);
 		DPS_send_AM_dly_cnt : IN std_logic_vector(7 downto 0);
@@ -695,6 +696,7 @@ PORT MAP(
 		set_chopper_enable_cnt	=> set_chopper_enable_cnt,
 		set_chopper_disable_cnt	=> set_chopper_disable_cnt,
 		PPG_start => send_enable,
+		syn_light_ext => syn_light_ext,
 		syn_light => syn_light,
 		chopper_ctrl => chopper_ctrl,
 		chopper_ctrl_80M => chopper_ctrl_sig,

@@ -188,11 +188,11 @@ begin
 		count_time_reg<=	X"01F4";--100us
 		pm_stable_cnt_reg<=	x"000F";--3us
 		poc_stable_cnt_reg<=	x"0019";--5us  
-		scan_inc_cnt_reg <=	x"14";--
+		scan_inc_cnt_reg <=	x"29";--步进0.1V
 		offset_voltage_reg<=	x"999";--  -1.5V
 		half_wave_voltage_reg<=	x"547";--1.1V
-		minus_voltage<=	"010" & x"80";--
-		step_cnt_reg	<=	x"83";--
+		minus_voltage<=	"001" & x"60";--下限 1V
+		step_cnt_reg	<=	x"2B";--43 算法5次  扫点16次 共21次 耗时2.2ms 
 		poc_cnt_set	<=	"0000000";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
