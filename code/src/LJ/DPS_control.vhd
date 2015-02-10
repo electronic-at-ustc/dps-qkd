@@ -254,6 +254,7 @@ begin
 			is_send_first_syn_d1		<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
+				send_enable_d1				<= send_enable;
 				is_send_first_syn			<= detect_first_syn_en and syn_light_ext;
 				is_send_first_syn_d1		<= is_send_first_syn;
 				is_send_first_syn_r		<= is_send_first_syn and (not is_send_first_syn_d1);--rising edge
