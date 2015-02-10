@@ -110,7 +110,7 @@ architecture Behavioral of DPS_control is
 	signal send_en_PM_reg 			: std_logic;
 	signal pm_steady_enable			: std_logic;
 	
-	signal send_enable_d1				: std_logic;
+	signal chopper_ctrl_reg_d1			: std_logic;
 	signal is_send_first_syn			: std_logic;
 	signal is_send_first_syn_r			: std_logic;
 	signal is_send_first_syn_d1		: std_logic;
@@ -252,12 +252,14 @@ begin
 			is_send_first_syn			<= '0';
 			is_send_first_syn_r		<= '0';
 			is_send_first_syn_d1		<= '0';
+			chopper_ctrl_reg_d1		<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
+				chopper_ctrl_reg_d1		<= chopper_ctrl_reg;
 				is_send_first_syn			<= detect_first_syn_en and syn_light_ext;
 				is_send_first_syn_d1		<= is_send_first_syn;
-				is_send_first_syn_r		<= is_send_first_syn and (not is_send_first_syn_d1);--rising edge
-				if(send_enable = '1' and send_enable_d1 = '0') then
+				is_send_first_syn_r		<= is_send_first_syn and (not is_send_first_syn_d1)  and (not Alice_H_Bob_L);--rising edge
+				if(chopper_ctrl_reg = '1' and chopper_ctrl_reg_d1 = '0') then
 					detect_first_syn_en		<= '1';
 				else
 					if(syn_light_ext = '1') then
@@ -389,8 +391,10 @@ begin
 			exp_running_250M	<= '0';
 			send_enable_250M	<= '0';
 			exp_running_reg	<= '0';
+			syn_light_sig	<= '0';
 		else
 			if(sys_clk_250M'event and sys_clk_250M = '1') then
+				syn_light_sig			<= chopper_ctrl_reg;
 				send_enable_250M		<= send_enable;
 				exp_running_reg		<= exp_running;
 				exp_running_250M		<= exp_running_reg;
@@ -410,14 +414,14 @@ begin
   end process;
   
   ---syn light has 16 sys_clk_250M clock width
-  process(syn_light_cnt, DPS_syn_dly_cnt_reg, send_enable_250M) 
-  begin 
-		if(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_reg and send_enable_250M = '1') then
-			syn_light_sig	<= '1'; 
-		else
-			syn_light_sig	<= '0';
-		end if;
-  end process;
+--  process(syn_light_cnt, DPS_syn_dly_cnt_reg, send_enable_250M) 
+--  begin 
+--		if(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_reg and send_enable_250M = '1') then
+--			syn_light_sig	<= '1'; 
+--		else
+--			syn_light_sig	<= '0';
+--		end if;
+--  end process;
   
   process(syn_light_cnt, DPS_round_cnt_AM, DPS_round_cnt_AM_sub64) 
   begin 
