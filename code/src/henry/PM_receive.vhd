@@ -48,6 +48,7 @@ port(
 		pm_data_store_en : in  STD_LOGIC; 
 		pm_steady_test : in  STD_LOGIC; 
 		dac_finish : in  STD_LOGIC; 
+		single_mode : in  STD_LOGIC; 
 		Dac_Ena	  : out  STD_LOGIC; 
 		dac_data	  : out  STD_LOGIC_vector(11 downto 0); 
 		
@@ -121,6 +122,7 @@ architecture Behavioral of PM_receive      is
 		min_set_result_en : in std_logic;
 		min_set_result : in std_logic_vector(11 downto 0);
 		addr_reset : in STD_LOGIC;
+--		lut_ram_128_rd : in STD_LOGIC;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
 		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
 		------
@@ -137,7 +139,7 @@ architecture Behavioral of PM_receive      is
 	PORT(
 		sys_clk_80M : IN std_logic;
 		sys_rst_n : IN std_logic;
---		Dac_finish : IN std_logic;
+		single_mode : IN std_logic;
 		Dac_set_result : IN std_logic_vector(11 downto 0);
 		pm_steady_test : IN std_logic;
 				
@@ -151,6 +153,9 @@ architecture Behavioral of PM_receive      is
 		wait_count 	 : out 	std_logic_vector(19 downto 0);
 		wait_dac_cnt : out 	std_logic_vector(7 downto 0);
 		wait_finish	 :	in 	std_logic;
+		lut_ram_128_vld  : in std_logic;
+		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
+		min_set_result	  : in STD_LOGIC_vector(11 downto 0);
 		reg_wr : IN std_logic;
 		reg_wr_addr : IN std_logic_vector(3 downto 0);
 		reg_wr_data : IN std_logic_vector(15 downto 0);
@@ -302,6 +307,7 @@ begin
 	Inst_PM_control: PM_control PORT MAP(
 		sys_clk_80M => sys_clk_80M,
 		sys_rst_n => sys_rst_n,
+		single_mode => single_mode,
 		offset_voltage =>offset_voltage,
 		half_wave_voltage =>half_wave_voltage,
 		use_8apd => use_8apd,
@@ -310,8 +316,11 @@ begin
 		Dac_Ena => Dac_Ena,
 		Dac_Data => DAC_set_data,
 		Sys_Rst =>  Sys_Rst,
+		lut_ram_128_vld =>  lut_ram_128_vld,
+		lut_ram_128_addr =>  lut_ram_128_addr,
 		Dac_set_result => Dac_set_result,
 		tan_adj_voltage => tan_adj_voltage,
+		min_set_result => min_set_result,
 		wait_start => wait_start,
 		wait_count => wait_count,
 		wait_finish => wait_finish,

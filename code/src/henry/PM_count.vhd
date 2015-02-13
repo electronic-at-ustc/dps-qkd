@@ -134,7 +134,6 @@ chnl_cnt_reg7_out <= chnl_cnt_reg7;
 ----chnl_cnt_reg8_out <= chnl_cnt_reg8;
 ----chnl_cnt_reg9_out <= chnl_cnt_reg9;
 
-wait_finish	<= wait_finish_reg;
 ---******* detect rising of the 'Dac_finish' ***
 ---one beat delay
 --dly_dac_finish_pro : process(sys_clk_80M,sys_rst_n)
@@ -169,7 +168,9 @@ wait_finish_pro: process(sys_clk_80M,sys_rst_n)
 begin
 if(sys_rst_n = '0' ) then-------------
 	wait_finish_reg	<=	'0';    
+	wait_finish			<=	'0';    ----dedicated, change must be careful
 elsif rising_edge(sys_clk_80M) then
+	wait_finish	<= wait_finish_reg;
 	if(stable_cnt = 1)then 
 		wait_finish_reg	<=	'1';
 	else
@@ -294,29 +295,28 @@ begin
 	end if;
 end process;
 
+min_set_result		<= min_dac;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
 		min_cnt				<= (others => '1');
 		min_dac				<= (others => '0');
-		min_set_result		<= (others => '0');
 		min_set_result_en	<= '0';
 	elsif rising_edge(sys_clk_80M) then
 		min_set_result_en	<= one_time_end;
 		if(wait_finish_reg = '1' and wait_dac_cnt /= 0 and chopper_ctrl = '1') then ---10 counter
 			if(use_4apd = '1') then
-				if(apd_cnt_reg(0) < min_cnt) then
+				if(apd_cnt_reg(0) <= min_cnt) then
 					min_cnt	<= apd_cnt_reg(0);
 					min_dac	<= dac_set_data;
 				end if;
 			else	---default is APD 2
-				if(apd_cnt_reg(1) < min_cnt) then
+				if(apd_cnt_reg(1) <= min_cnt) then
 					min_cnt	<= apd_cnt_reg(1);
 					min_dac	<= dac_set_data;
 				end if;
 			end if;
-		elsif(one_time_end = '1' or chopper_ctrl = '0') then
-			min_set_result	<= min_dac;
+		elsif(one_time_end = '1') then
 			min_cnt			<= (others => '1');
 		end if;
 	end if;

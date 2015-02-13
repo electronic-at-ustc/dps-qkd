@@ -53,6 +53,7 @@ entity PM_control is
 		POC_ctrl		 : out std_logic_vector(6 downto 0);
 		POC_ctrl_en	 : out std_logic;
 		--port to(from) count--------
+		single_mode	  : in std_logic;
 		pm_steady_test	  : in std_logic;
 		use_8apd     : out std_logic;
 		use_4apd     : out std_logic;
@@ -94,6 +95,10 @@ entity PM_control is
 		wait_dac_cnt : out 	std_logic_vector(7 downto 0);
 		wait_finish	 :	in 	std_logic;
 		
+		
+		lut_ram_128_vld  : in std_logic;
+		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
+		min_set_result : in STD_LOGIC_vector(11 downto 0);
 		-----
 		--syn_light : in std_logic;--when high, go into phase steady state
 		chopper_ctrl : in std_logic--when high, go into phase steady state
@@ -120,6 +125,7 @@ signal scan_dac_data : std_logic_vector(11 downto 0);
 
 signal step_cnt_reg		: std_logic_vector(7 downto 0);
 signal scan_inc_cnt_reg	: std_logic_vector(7 downto 0);
+signal step_size			: std_logic_vector(7 downto 0);
 signal pm_stable_cnt_reg	: std_logic_vector(15 downto 0);
 signal poc_stable_cnt_reg 	: std_logic_vector(15 downto 0);
 signal count_time_reg 		: std_logic_vector(15 downto 0);
@@ -166,7 +172,9 @@ begin
 	end if;
 end process;
 addr_reset					<= chopper_ctrl_rising;
-chopper_ctrl_rising  	<=  (not chopper_ctrl_1d) and chopper_ctrl;
+---chopper上升沿加入单次模式后
+---其条件变为非单模式的上升沿或单模式的随机数有效信号
+chopper_ctrl_rising  	<=  ((not chopper_ctrl_1d) and chopper_ctrl and (not single_mode)) or (lut_ram_128_vld and single_mode);
 pm_steady_test_rising  	<=  (not pm_steady_test_1d) and pm_steady_test;
 scan_data_store_en_rising  	<=  (not scan_data_store_en_1d) and scan_data_store_en;
 
@@ -186,13 +194,13 @@ begin
 		config_reg2<=	x"4F5"; --:-0.95V
 		config_reg3<=	x"6B8"; --:-0.4V
 		count_time_reg<=	X"01F4";--100us
-		pm_stable_cnt_reg<=	x"000F";--3us
-		poc_stable_cnt_reg<=	x"0019";--5us  
-		scan_inc_cnt_reg <=	x"29";--步进0.1V
+		pm_stable_cnt_reg<=	x"000A";--2us
+		poc_stable_cnt_reg<=	x"000A";--2us  
+		scan_inc_cnt_reg <=	x"52";--步进0.2V 二次步进0.1V
 		offset_voltage_reg<=	x"999";--  -1.5V
 		half_wave_voltage_reg<=	x"547";--1.1V
-		minus_voltage<=	"001" & x"60";--下限 1V
-		step_cnt_reg	<=	x"2B";--43 算法5次  扫点16次 共21次 耗时2.2ms 
+		minus_voltage<=	"001" & x"9A";--下限 1V
+		step_cnt_reg	<=	x"26";--38  扫点19次 算法5次 共24次 耗时2.4ms 最后一次用于设置最优值
 		poc_cnt_set	<=	"0000000";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
@@ -230,7 +238,7 @@ begin
 			end if;
 			if(reg_wr_addr = 8)then
 				scan_inc_cnt_reg<= reg_wr_data(7 downto 0);
-				step_cnt_reg	<=	(reg_wr_data(14 downto 8)&'0') + 11;
+				step_cnt_reg	<=	(reg_wr_data(14 downto 8)&'0');
 			end if;
 			if(reg_wr_addr = 9)then
 				offset_voltage_reg<=	reg_wr_data(11 downto 0);
@@ -253,31 +261,37 @@ end process;
 	tan_adj_voltage	<= x"000";
  ---------set 128 times ------------------------------
  --------- 结束时 是否 需要输出 信号---------------------
-  process(sys_clk_80M, sys_rst_n, chopper_ctrl_rising) 
+  process(sys_clk_80M, sys_rst_n, poc_cnt_set) 
   begin 
 		if(sys_rst_n = '0') then
 			poc_count	<= poc_cnt_set;
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
-			if((chopper_ctrl_rising = '1' and pm_data_store_en = '1') or pm_steady_test_rising = '1') then
-				if(add_L_sub_H = '0') then
-					poc_count	<= poc_cnt_set + '1';
-				else
-					poc_count	<= poc_cnt_set - '1';
-				end if;
-			elsif(set_onetime_end = '1' and poc_count /= poc_cnt_set) then
-				if(add_L_sub_H = '0') then
-					poc_count 	<= poc_count + '1';
-				else
-					poc_count 	<= poc_count - '1';
+			if(single_mode = '1') then
+				if(lut_ram_128_vld = '1') then
+					poc_count	<=  lut_ram_128_addr; 
 				end if;
 			else
-				poc_count	<= poc_count;
+				if((chopper_ctrl_rising = '1' and pm_data_store_en = '1') or pm_steady_test_rising = '1') then
+					if(add_L_sub_H = '0') then
+						poc_count	<= poc_cnt_set + '1';
+					else
+						poc_count	<= poc_cnt_set - '1';
+					end if;
+				elsif(set_onetime_end = '1' and poc_count /= poc_cnt_set) then
+					if(add_L_sub_H = '0') then
+						poc_count 	<= poc_count + '1';
+					else
+						poc_count 	<= poc_count - '1';
+					end if;
+				else
+					poc_count	<= poc_count;
+				end if;
 			end if;
 		end if;
   end process;
   
-  process(set_onetime_end, poc_count) begin
-	  if(set_onetime_end = '1' and poc_count = poc_cnt_set) then
+  process(set_onetime_end, poc_count, single_mode) begin
+	  if(set_onetime_end = '1' and (poc_count = poc_cnt_set or single_mode = '1')) then
 			complete	<= '1';
 	  else
 			complete	<= '0';
@@ -293,7 +307,11 @@ end process;
 			POC_ctrl_en <= '0';
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 				if(wait_start_reg = '1' and set_count = x"01") then
-					POC_ctrl <= poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
+					if(single_mode = '1') then
+						POC_ctrl <= lut_ram_128_addr; 	--addra  与wea信号 通过状态机设置
+					else
+						POC_ctrl <= poc_count(6 downto 0); 	--addra  与wea信号 通过状态机设置
+					end if;
 					POC_ctrl_en <= '1';
 				else
 --					POC_ctrl	<= POC_ctrl;
@@ -380,7 +398,7 @@ process(sys_clk_80M, sys_rst_n)
 					set_count	<= x"00";
 				elsif(set_count > 0) then
 					if(add_set_count = '1') then
-						if(set_count < step_cnt_reg) then
+						if(set_count < step_cnt_reg+11) then
 							set_count	<= set_count + 1;
 						else
 							set_count	<= x"01";
@@ -393,9 +411,9 @@ process(sys_clk_80M, sys_rst_n)
 		end if;
   end process;
   
-  process(wait_finish, set_count) 
+  process(wait_finish, set_count, step_cnt_reg) 
   begin 
-		if(wait_finish = '1' and set_count = step_cnt_reg) then
+		if(wait_finish = '1' and set_count = step_cnt_reg+11) then
 			set_onetime_end	<= '1';
 		else
 			set_onetime_end	<= '0';
@@ -472,17 +490,31 @@ process(sys_clk_80M, sys_rst_n)
 		if(sys_rst_n = '0') then
 			Dac_set_result_low	<= (others =>'0');
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
-			if(set_count = 10) then
+			if(set_count = 10) then--以算法算出结果为中心扫点9个 范围（setp_cnt * setp_size）
 				if(Dac_set_result > minus_voltage) then
 					Dac_set_result_low <= Dac_set_result - minus_voltage;
 				else
 					Dac_set_result_low  <= x"000";
 				end if;
+			--以7个扫点电压中计数最小的电压为中心扫点9个 范围（setp_cnt * setp_size / 2）
+			--扫点步长变为原来的1/2
+			elsif(wait_finish = '1' and set_count = 11 + step_cnt_reg(6 downto 1)) then
+				step_size	<= '0' & scan_inc_cnt_reg(7 downto 1);
+				if(min_set_result > minus_voltage(10 downto 1)) then
+					Dac_set_result_low <= min_set_result - minus_voltage(10 downto 1);
+				else
+					Dac_set_result_low  <= x"000";
+				end if;	
+			elsif(wait_finish = '1' and set_count = 9 + step_cnt_reg) then
+			--最后一次设置为最优DAC值，等待发射端发射编码信号
+				Dac_set_result_low <= min_set_result;
 			else
+				--
 				if(wait_finish = '1' and set_count > 11 and set_count(0) = '1') then
-					Dac_set_result_low <= Dac_set_result_low + scan_inc_cnt_reg;
+					Dac_set_result_low <= Dac_set_result_low + step_size;
 				elsif(set_count < 10) then
 					Dac_set_result_low	<= (others =>'0');
+					step_size				<= scan_inc_cnt_reg;
 				end if;
 			end if;			
 		end if;

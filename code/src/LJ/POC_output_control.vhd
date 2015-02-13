@@ -9,7 +9,12 @@
 -- Target Devices: 
 -- Tool versions: 
 -- Description: 
---
+-- 如果发射端是稳一次做一次的模式，
+--     当发射使能时，DAC输出发射端稳相光截断电压，信号光通过电压
+--     否则当发射禁止时，DAC输出发射端信号光截断电压，稳相光通过电压
+-- 如果接收端是稳一次做一次的模式，
+--     当看到同步信号上升沿，读出一个随机数，并设置POC电压
+--     接收PM稳相模块输出的DAC设置值
 -- Dependencies: 
 --
 -- Revision: 
@@ -48,6 +53,9 @@ generic
          exp_running					:  in  STD_LOGIC;
          syn_light					:  in  STD_LOGIC;
          Alice_H_Bob_L				:  in  STD_LOGIC;
+         send_enable					:  in  STD_LOGIC;
+         single_mode					:  in  STD_LOGIC;
+         chopper_ctrl				:  in  STD_LOGIC;
          
 			POC_fifo_wr_en				:  in std_logic;--fifo write enable
 			POC_fifo_wr_data			:  in std_logic_vector(BURST_LEN*DATA_WIDTH-1 downto 0);--fifo write data
@@ -104,6 +112,16 @@ signal POC_control_reg			:	std_logic_vector(6 downto 0);
 signal POC_control_reg_d1		:	std_logic_vector(6 downto 0);
 signal POC_start_reg				:	std_logic_vector(6 downto 0);
 signal POC_stop_reg				:	std_logic_vector(6 downto 0);
+signal dac_chA_high				:	std_logic_vector(15 downto 0);
+signal dac_chB_high				:	std_logic_vector(15 downto 0);
+signal dac_chA_low				:	std_logic_vector(15 downto 0);
+signal dac_chB_low				:	std_logic_vector(15 downto 0);
+signal send_enable_d1			:	std_logic;
+signal send_enable_r				:	std_logic;
+signal send_enable_f				:	std_logic;
+signal chopper_ctrl_d1			:	std_logic;
+signal chopper_ctrl_r			:	std_logic;
+signal chopper_ctrl_f			:	std_logic;
 
 type count_stop_regType is array(0 to 6) of std_logic_vector(3 downto 0);
 signal count_stop : count_stop_regType;
@@ -156,7 +174,7 @@ begin
 		dac_data			<= (others => '0');
 	elsif rising_edge(sys_clk) then
 		pm_dac_en_d1	<= pm_dac_en;
-		if(pm_rd_vld = '1') then---random data control pm voltage
+		if(pm_rd_vld = '1' and single_mode = '0') then---random data control pm voltage
 			dac_data	<=	x"4" & lut_ram_128_data;
 			dac_ena	<= '1';
 		else
@@ -167,9 +185,57 @@ begin
 				if(dac_test_en = '1') then --test enable
 					dac_ena	<= '1';
 					dac_data	<= dac_test_data;
-				else
-					dac_ena	<= '0';
+				else--其他情况下 由实验过程控制
+					if(chopper_ctrl_r = '1') then--设置稳相光通过电压
+						dac_data	<= dac_chA_high;
+					elsif(chopper_ctrl_f = '1') then--设置稳相光截断电压
+						dac_data	<= dac_chA_low;
+					elsif(send_enable_r = '1') then--设置信号光通过电压
+						dac_data	<= dac_chB_high;
+					elsif(send_enable_f = '1') then--设置信号光截断电压
+						dac_data	<= dac_chB_low;
+					end if;
+
+					dac_ena	<= (chopper_ctrl_r or chopper_ctrl_f or send_enable_r or send_enable_f) and Alice_H_Bob_L;
 				end if;
+			end if;
+		end if;
+	end if;
+ end process;
+ 
+ process(sys_clk, sys_rst_n)
+ begin
+	if(sys_rst_n = '0') then
+		send_enable_d1	<= '0';
+		send_enable_r	<= '0';
+		send_enable_f	<= '0';
+		chopper_ctrl_d1<= '0';
+		chopper_ctrl_r <= '0';
+		chopper_ctrl_f <= '0';
+		dac_chA_high 	<= x"4800";
+		dac_chA_low 	<= x"4000";
+		dac_chB_high 	<= x"C800";
+		dac_chB_low 	<= x"C000";
+	elsif rising_edge(sys_clk) then
+		send_enable_d1		<= send_enable;
+		send_enable_r		<= (not send_enable_d1) and send_enable;
+		send_enable_f		<= (not send_enable   ) and send_enable_d1;
+		chopper_ctrl_d1	<= chopper_ctrl;
+		chopper_ctrl_r		<= (not chopper_ctrl_d1) and chopper_ctrl;
+		chopper_ctrl_f		<= (not chopper_ctrl   ) and chopper_ctrl_d1;
+		
+		if(dac_test_en = '1')then
+			if(dac_test_data(15 downto 12) = x"0") then
+				dac_chA_high	<= x"4" & dac_test_data(11 downto 0);
+			end if;
+			if(dac_test_data(15 downto 12) = x"1") then
+				dac_chA_low		<= x"4" & dac_test_data(11 downto 0);
+			end if;
+			if(dac_test_data(15 downto 12) = x"2") then
+				dac_chB_high	<= x"C" & dac_test_data(11 downto 0);
+			end if;
+			if(dac_test_data(15 downto 12) = x"3") then
+				dac_chB_low		<= x"C" & dac_test_data(11 downto 0);
 			end if;
 		end if;
 	end if;
@@ -186,7 +252,7 @@ begin
 			if(rnd_rd_vld = '1') then---random control
 				POC_control_reg	<= rnd_rd_data(6 downto 0);
 			else
-				if(POC_control_en = '1') then--PM steady control
+				if(POC_control_en = '1' and single_mode = '0') then--PM steady control
 					POC_control_reg	<= POC_control;	
 				else
 					if(poc_test_en = '1') then--PM test control
@@ -215,7 +281,7 @@ begin
 			if(POC_start_reg(i) = '1') then
 				count_start(i)		<= (others => '0');
 			else
-				if(POC_stop_reg(i) = '1') then
+				if(POC_stop_reg(i) = '1' or exp_running = '0') then
 					count_start(i)		<= (others => '1');
 				else
 					if(count_start(i) = 400) then

@@ -122,6 +122,7 @@ ARCHITECTURE behavior OF ground_pro_top_tb_lj IS
    signal Rnd_Gen_WNG_Clk : std_logic_vector(3 downto 0);
    signal Rnd_Gen_WNG_Oe_n : std_logic_vector(3 downto 0);
    signal chopper_ctrl					:  STD_LOGIC;
+   signal syn_light_ext_en				:  STD_LOGIC := '0';
 	signal syn_light						:  STD_LOGIC;
 	signal apd_en2						:  STD_LOGIC;
 	signal apd_en3						:  STD_LOGIC;
@@ -141,7 +142,7 @@ ARCHITECTURE behavior OF ground_pro_top_tb_lj IS
 
    -- Clock period definitions
     -- Clock period definitions
-   constant clk_40M_I_period : time := 12.5 ns;
+   constant clk_40M_I_period : time := 6.25 ns;
 --   constant clk_40M_IB_period : time := 10 ns;
    constant cpld_fpga_clk_period : time := 33 ns;
 --   constant tdc_sdram_clk_period : time := 10 ns;
@@ -245,9 +246,9 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for 200 us;
 		loop
 			GPS_pulse_in <= '0';
-			wait for 1 ms;
+			wait for 200 us;
 			GPS_pulse_in <= '1';
-			wait for 1 ms;
+			wait for 200 us;
 		end loop;
    end process;
 	apd_en_clk_process :process
@@ -275,13 +276,30 @@ rdn_gen : for i in 0 to 4-1 generate
   
  syn_light_process :process
    begin
-		wait for 200 us;
-		
-		loop
+--		wait for 200 us;
+--		loop
+--		syn_light_ext <= '0';
+--		wait for 99990 ns;
+--		syn_light_ext <= syn_light_ext_en;
+--		wait for 10 ns;
+--		end loop;
+		wait until rising_edge(chopper_ctrl);
+		wait for 1 us;
+		syn_light_ext <= '1';
+		wait for 1 us;
 		syn_light_ext <= '0';
-		wait for 12 us;
-		syn_light_ext <= not chopper_ctrl;
-		wait for 10 ns;
+   end process;
+	
+	process
+   begin
+		wait for 525 us;---chopper first change high
+		loop
+		syn_light_ext_en <= '0';
+		wait for 4925 us;--(5450-525)
+		syn_light_ext_en <= '1';
+		wait for 1800 us; --(7290-5450)
+		syn_light_ext_en <= '0';
+		wait for 45 us;-- 7295 - 525 
 		end loop;
    end process;
 	
@@ -349,62 +367,73 @@ rdn_gen : for i in 0 to 4-1 generate
 		
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A0";
+		cpld_fpga_data <= x"00000E00";
+--		cpld_fpga_data <= x"00000E69";
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
+		
+		wait until rising_edge(cpld_fpga_clk);
+		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A0";
 --		cpld_fpga_data <= x"00000E00";
-		cpld_fpga_data <= x"00000E69";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
---		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A5";
-		cpld_fpga_data <= x"00000100";
+		cpld_fpga_data <= x"00000E54";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
 		
 		wait for 200 ns;
 		wait until rising_edge(cpld_fpga_clk);
---		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A6";
-		cpld_fpga_data <= x"00000100";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
-		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A7";
-		cpld_fpga_data <= x"00000100";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
-		
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A8";
-		cpld_fpga_data <= x"00000100";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
---		
---		wait for 200 ns;
---		wait until rising_edge(cpld_fpga_clk);
 --		
 --		cpld_fpga_sglwr	<=	'1';
---		cpld_fpga_addr	<=	x"A9";
---		cpld_fpga_data <= x"80000100";
---		wait for cpld_fpga_clk_period;
---		cpld_fpga_sglwr	<=	'0';
---		wait for cpld_fpga_clk_period*3;
+--		cpld_fpga_addr	<=	x"A5";
+--		cpld_fpga_data <= x"0002EE00";--send enable 
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
+		
+		wait for 200 ns;
+		wait until rising_edge(cpld_fpga_clk);
+--		
+--		cpld_fpga_sglwr	<=	'1';
+--		cpld_fpga_addr	<=	x"A6";
+--		cpld_fpga_data <= x"00030D00";--send disable
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
+		
+		wait for 200 ns;
+		wait until rising_edge(cpld_fpga_clk);
+		
+--		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_addr	<=	x"A7";
+		cpld_fpga_data <= x"00000050";--chopper enable 1us
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
+		
+		wait for 200 ns;
+		wait until rising_edge(cpld_fpga_clk);
+		
+--		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_addr	<=	x"A8";
+		cpld_fpga_data <= x"0002F000";--chopper disable
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
+--		
+		wait for 200 ns;
+		wait until rising_edge(cpld_fpga_clk);
+--		
+		--设置实验运行周期计数
+--		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_addr	<=	x"A3";
+--		cpld_fpga_data <= x"00027100";
+		cpld_fpga_data <= x"00030D40";
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
 --		
 --		wait for 200 ns;
 --		wait until rising_edge(cpld_fpga_clk);
@@ -443,15 +472,6 @@ rdn_gen : for i in 0 to 4-1 generate
 --		wait for cpld_fpga_clk_period;
 --		cpld_fpga_sglwr	<=	'0';
 --		wait for cpld_fpga_clk_period*3;
---		
-		wait for 1 us;
-		wait until rising_edge(cpld_fpga_clk);
-		cpld_fpga_sglwr	<=	'1';
-		cpld_fpga_addr	<=	x"A3";
-		cpld_fpga_data <= x"000A0880";
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
 --		
 --		wait for 1 us;
 --		wait until rising_edge(cpld_fpga_clk);

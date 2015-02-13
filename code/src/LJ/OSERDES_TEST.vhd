@@ -240,7 +240,7 @@ COMPONENT clock_manage
 		cpldif_dps_rd_en : IN std_logic;
 		cpldif_dps_wr_data : IN std_logic_vector(31 downto 0);          
 		Alice_H_Bob_L : OUT std_logic;
---		exp_stopping : OUT std_logic;
+		single_mode : OUT std_logic;
 		test_signal_delay: out std_logic;
 		scan_data_store_en: out std_logic;
 		rnd_data_store_en	: out std_logic;
@@ -289,9 +289,9 @@ COMPONENT clock_manage
 		sys_rst_n : IN std_logic;
 		exp_running : IN std_logic;
 		Alice_H_Bob_L : IN std_logic;
+		single_mode : IN std_logic;
 		gps_pulse : IN std_logic;
 		syn_light_ext : IN std_logic;
---		pm_steady_test 		: in std_logic;--80M clock domain
 		DPS_send_PM_dly_cnt : IN std_logic_vector(7 downto 0);
 		DPS_send_AM_dly_cnt : IN std_logic_vector(7 downto 0);
 		DPS_syn_dly_cnt : IN std_logic_vector(11 downto 0);
@@ -305,7 +305,8 @@ COMPONENT clock_manage
 	   GPS_pulse_int			:  out std_logic;--80M clock domain
 	   GPS_pulse_int_active	:  out std_logic;--80M clock domain
 		exp_running_250M :	OUT std_logic;
-		PPG_start :	OUT std_logic;
+		send_enable_250M :	OUT std_logic;
+		send_enable_80M :	OUT std_logic;
 		syn_light : OUT std_logic;
 		chopper_ctrl : OUT std_logic;
 		chopper_ctrl_80M : OUT std_logic;
@@ -330,6 +331,9 @@ COMPONENT clock_manage
 		exp_running : IN std_logic;
 		syn_light : IN std_logic;
 		Alice_H_Bob_L : IN std_logic;
+		send_enable					:  in  STD_LOGIC;
+		single_mode					:  in  STD_LOGIC;
+		chopper_ctrl				:  in  STD_LOGIC;
 		POC_fifo_wr_en : IN std_logic;
 		POC_fifo_wr_data : IN std_logic_vector(31 downto 0);
 --		chopper_contrl : IN std_logic;
@@ -358,6 +362,7 @@ COMPONENT clock_manage
 		sys_clk_80M : IN std_logic;
 		sys_rst_n : IN std_logic;
 		fifo_rst			:	in	std_logic;
+		single_mode : IN std_logic;
 		dac_finish : IN std_logic;
 		reg_wr : IN std_logic;
 		reg_wr_addr : IN std_logic_vector(3 downto 0);
@@ -411,6 +416,7 @@ COMPONENT clock_manage
 --	signal sys_rst_n3 : std_logic;
 --	signal sys_clk_80M : std_logic;
 	signal exp_running_250M : std_logic;
+	signal single_mode : std_logic;
 	signal sys_clk_200M : std_logic;
 	signal sys_clk_500M : std_logic;
 --	signal sys_clk_100M : std_logic;
@@ -442,8 +448,10 @@ signal		lut_ram_128_data : std_logic_vector(11 downto 0);
 signal	test_rnd             	:  std_logic;
 signal	delay_load              :  std_logic;
 ----
+signal	chopper_ctrl_send        :  std_logic;
 signal	chopper_ctrl_sig        :  std_logic;
-signal	send_enable             :  std_logic;
+signal	send_enable_250M        :  std_logic;
+signal	send_enable_80M         :  std_logic;
 signal	send_en                 :  std_logic;
 signal	send_en_AM              :  std_logic;
 
@@ -617,7 +625,7 @@ PORT MAP(
 		delay_AM1_out => delay_AM1_out,
 --		delay_AM2_out => delay_AM2_out,
 --		delay_PM_out => delay_PM_out,
-		send_enable => send_enable,
+		send_enable => send_enable_250M,
 		send_en_AM_p => send_en_AM_p,
 		send_en_AM_n => send_en_AM_n,
 		SERIAL_OUT_p => SERIAL_OUT_p_reg,
@@ -650,7 +658,7 @@ PORT MAP(
 		pm_data_store_en => pm_data_store_en,
 		tdc_data_store_en => tdc_data_store_en,
 		test_signal_delay => test_signal_delay,
---		delay_PM => delay_PM,
+		single_mode => single_mode,
 		delay_AM1_out => delay_AM1_out,
 --		delay_AM2_out => delay_AM2_out,
 --		delay_PM_out => delay_PM_out,
@@ -674,10 +682,12 @@ PORT MAP(
 	);
 	
 	PPG_start	<= chopper_ctrl_sig;
+	chopper_ctrl<= chopper_ctrl_send;
 	Inst_DPS_control: DPS_control PORT MAP(
 		sys_clk_80M => sys_clk,
 		sys_clk_250M => sys_clk_250m,
 		sys_rst_n => sys_rst_n,
+		single_mode => single_mode,
 		exp_running => exp_running,
 		exp_running_250M => exp_running_250M,
 		Alice_H_Bob_L => Alice_H_Bob_L,
@@ -695,10 +705,11 @@ PORT MAP(
 		set_send_enable_cnt		=> set_send_enable_cnt,
 		set_chopper_enable_cnt	=> set_chopper_enable_cnt,
 		set_chopper_disable_cnt	=> set_chopper_disable_cnt,
-		PPG_start => send_enable,
+		send_enable_250M => send_enable_250M,
+		send_enable_80M => send_enable_80M,
 		syn_light_ext => syn_light_ext,
 		syn_light => syn_light,
-		chopper_ctrl => chopper_ctrl,
+		chopper_ctrl => chopper_ctrl_send,
 		chopper_ctrl_80M => chopper_ctrl_sig,
 --		send_en_AM_p => send_en_AM_p,
 --		send_en_AM_n => send_en_AM_n,
@@ -711,6 +722,8 @@ PORT MAP(
 		sys_rst_n => sys_rst_n,
 		fifo_clr => dps_cpldif_fifo_clr,
 		exp_running => exp_running,
+		single_mode => single_mode,
+		send_enable => send_enable_80M,
 		Alice_H_Bob_L => Alice_H_Bob_L,
 		syn_light => syn_light_ext,
 		POC_fifo_wr_en => serial_fifo_wr_en,
@@ -725,7 +738,7 @@ PORT MAP(
 		lut_ram_128_vld => lut_ram_128_vld,
 		lut_ram_128_addr => lut_ram_128_addr,
 		lut_ram_128_data => lut_ram_128_data,
---		chopper_contrl => chopper_ctrl_sig,
+		chopper_ctrl => chopper_ctrl_send,
 		Dac_Ena		=> dac_ena,
 		Dac_Data 	=> dac_data,
 		POC_control_en => POC_control_en,
@@ -769,6 +782,7 @@ PORT MAP(
 		lut_ram_128_data => lut_ram_128_data,
 		alg_data_wr => PM_wr_en,
 		alg_data_wr_data => PM_wr_data,
+		single_mode => single_mode,
 		chopper_ctrl => chopper_ctrl_sig
 	);
 	
@@ -791,7 +805,7 @@ PORT MAP(
 	SERIAL_OUT_p(0)	<= SERIAL_OUT_p_reg(0);
 	SERIAL_OUT_n(0)	<= SERIAL_OUT_n_reg(0);
 	
-	SERIAL_OUT_p(1)	<= send_enable;
+	SERIAL_OUT_p(1)	<= send_enable_250M;
 	SERIAL_OUT_n(1)	<= send_en_AM;
 	
 	SERIAL_OUT_p(2)	<= SERIAL_OUT_p_reg(2);

@@ -414,13 +414,17 @@ process (valid2,dout2,delay_AM1,test_signal_delay_reg,exp_running)
 			end if;
 		else
 			if(exp_running = '1') then
-				if(valid2 = '1') then
-					serial_in_reg(0)	<= dout2(0) & dout2(0) & dout2(1) & dout2(1);--"0" & dout2(3) & "0" & dout2(0);
+				if(send_enable = '0') then---当不处于100US内，发送固定电平PM信号 
+					serial_in_reg(0)	<= x"0";
 				else
-					serial_in_reg(0)	<= delay_AM1(31 downto 28);
+					if(valid2 = '1') then
+						serial_in_reg(0)	<= dout2(0) & dout2(0) & dout2(1) & dout2(1);--"0" & dout2(3) & "0" & dout2(0);
+					else
+						serial_in_reg(0)	<= delay_AM1(31 downto 28);
+					end if;
 				end if;
-			else
-				serial_in_reg(0)	<= x"0";
+			else---不在运行模式，PMD输出由delay_AM1(27 downto 24)控制
+				serial_in_reg(0)	<= delay_AM1(27 downto 24);
 			end if;
 		end if;
 	end process;

@@ -93,7 +93,7 @@ begin
   ---sram not full
   ---random fifo not empty
   ---calibreation is done
-  process(exp_running, random_fifo_empty, serial_fifo_rdy_reg, cpldif_dps_fifo_prog_full) 
+  process(exp_running, random_fifo_empty, serial_fifo_rdy_reg, cpldif_dps_fifo_prog_full, send_write_prepare) 
   begin 
 		if(exp_running = '1' and random_fifo_empty = '0' and serial_fifo_rdy_reg = '1' and send_write_prepare = '0') then
 			fifo_operate_permit	<= '1';
