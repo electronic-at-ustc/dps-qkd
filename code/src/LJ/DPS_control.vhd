@@ -40,7 +40,7 @@ entity DPS_control is
 	  Alice_H_Bob_L			:  in std_logic;--80M clock domain
 	  gps_pulse    			:  in std_logic;--80M clock domain
 	  
---	  pm_steady_test 			:  in std_logic;--80M clock domain
+	  single_mode 			:  in std_logic;--80M clock domain
 	  
 	  GPS_period_cnt			: in	std_logic_vector(31 downto 0);--bit 31: 1 use intenal gps; 0 use external gps
 	  
@@ -59,7 +59,8 @@ entity DPS_control is
 	  exp_running_250M		:  out std_logic;--250M clock domain
 	  GPS_pulse_int			:  out std_logic;--80M clock domain
 	  GPS_pulse_int_active	:  out std_logic;--80M clock domain
-	  PPG_start					:  out std_logic;--250M clock domain
+	  send_enable_250M		:  out std_logic;--250M clock domain
+	  send_enable_80M			:  out std_logic;--250M clock domain
 	  
 	  chopper_ctrl				:  out std_logic;--80M clock domain
 	  chopper_ctrl_80M		:  out std_logic;--80M clock domain
@@ -93,9 +94,11 @@ architecture Behavioral of DPS_control is
 --	signal chopper_time_set	: std_logic_vector(31 downto 0);
 --	signal DPS_chopper_cnt_reg	: std_logic_vector(3 downto 0);
 	
+	signal single_mode_sync			: std_logic;
+	signal chopper_ctrl_sync			: std_logic;
 	signal syn_light_sig			: std_logic;
---	signal PPG_start_1			: std_logic;
---	signal PPG_start_2			: std_logic;
+--	signal send_enable_250M_1			: std_logic;
+--	signal send_enable_250M_2			: std_logic;
 	signal syn_light_cnt			: std_logic_vector(15 downto 0);
 --	signal DPS_syn_dly_cnt_reg1: std_logic_vector(11 downto 0);
 	signal DPS_syn_dly_cnt_reg	: std_logic_vector(11 downto 0);
@@ -104,7 +107,7 @@ architecture Behavioral of DPS_control is
 	signal DPS_send_PM_dly_cnt_reg: std_logic_vector(7 downto 0);
 	signal DPS_send_AM_dly_cnt_reg: std_logic_vector(7 downto 0);
 	
-	signal send_enable_250M			: std_logic;
+	signal send_enable_250M_sig			: std_logic;
 	signal send_enable 				: std_logic;
 	signal send_en_AM_reg 			: std_logic;
 	signal send_en_PM_reg 			: std_logic;
@@ -129,7 +132,8 @@ architecture Behavioral of DPS_control is
 	
 	
 begin
-	PPG_start	<= send_enable_250M;
+	send_enable_250M	<= send_enable_250M_sig;
+	send_enable_80M	<= send_enable;
 --generate gps pulse rise pulse
   process(sys_clk_80M, sys_rst_n) 
   begin 
@@ -205,42 +209,20 @@ begin
 --		end if;
 --  end process;
   
-  ---generate 80M domain chopper_ctrl
-  ---for Bob
---  process(sys_clk_80M, sys_rst_n) 
---  begin 
---		if(sys_rst_n = '0') then
---			chopper_ctrl_80M		<= '0';
---		else
---			if(sys_clk_80M'event and sys_clk_80M = '1') then
---				if(pm_steady_test = '1') then
---					chopper_ctrl_80M		<= '1';
---				else
---					if(gps_count32 = set_chopper_enable_cnt and chopper_ctrl_reg = '1' and chopper_ctrl_cnt = 0) then
---						chopper_ctrl_80M		<= not Alice_H_Bob_L and exp_running;---Alice do not need this signal
---					else
---						if(gps_count32 = set_chopper_disable_cnt and chopper_ctrl_reg = '0' and chopper_ctrl_cnt = 0) then
---							chopper_ctrl_80M		<= '0';
---						else
---							null;
---						end if;
---					end if;
---				end if;
---			end if;
---		end if;
---  end process;
 --  chopper_ctrl	<= chopper_ctrl;
-	chopper_ctrl_80m <= pm_steady_enable;
+--	chopper_ctrl_80m <= pm_steady_enable;
   process(sys_clk_80M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
 			chopper_ctrl		<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
-				if(Alice_H_Bob_L = '1') then
-					chopper_ctrl		<= chopper_ctrl_reg;---Alice do not need this signal
+				if(Alice_H_Bob_L = '1') then--发射端需要 Chopper 用于在其上升沿或下降沿控制AM DAC电压控制
+					chopper_ctrl		<= chopper_ctrl_reg;
+					chopper_ctrl_80m	<= chopper_ctrl_reg;
 				else
-					chopper_ctrl		<= pm_steady_enable;
+					chopper_ctrl		<= '0';---Bob do not need this signal
+					chopper_ctrl_80m	<= chopper_ctrl_reg;
 				end if;
 			end if;
 		end if;
@@ -255,8 +237,10 @@ begin
 			chopper_ctrl_reg_d1		<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
+			--当处于单模式时，使用外部同步信号做上升沿检测
+			--当处于非单模式时，使用Chopper下降沿后的第一个同步信号做上升沿检测
 				chopper_ctrl_reg_d1		<= chopper_ctrl_reg;
-				is_send_first_syn			<= detect_first_syn_en and syn_light_ext;
+				is_send_first_syn			<= (detect_first_syn_en and syn_light_ext and (not single_mode)) or (syn_light_ext and single_mode);
 				is_send_first_syn_d1		<= is_send_first_syn;
 				is_send_first_syn_r		<= is_send_first_syn and (not is_send_first_syn_d1)  and (not Alice_H_Bob_L);--rising edge
 				if(chopper_ctrl_reg = '1' and chopper_ctrl_reg_d1 = '0') then
@@ -280,7 +264,12 @@ begin
 --			else
 				if (exp_running = '1') then
 					if(is_send_first_syn_r = '1') then---每一个round如果看见发射端第一个同步光脉冲，则将接收端计数调整1次
-						chopper_time_cnt	<= set_send_enable_cnt(30 downto 0) + DPS_syn_dly_cnt_reg;
+					if(single_mode = '1') then--单模式下 同步脉冲在Chopper上升沿发出
+							chopper_time_cnt	<= set_chopper_enable_cnt(30 downto 0);
+						else--非单模式下 同步脉冲在send enable上升沿后DPS_syn_dly_cnt_reg发出
+							chopper_time_cnt	<= set_send_enable_cnt(30 downto 0) + DPS_syn_dly_cnt_reg;
+						end if;
+						
 					else
 						if(chopper_time_cnt < GPS_period_cnt(30 downto 0)) then
 							chopper_time_cnt	<= chopper_time_cnt + 1;
@@ -302,14 +291,10 @@ begin
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
 --				if(Alice_H_Bob_L = '1') then
-					if(chopper_time_cnt > set_chopper_enable_cnt ) then
+					if(chopper_time_cnt > set_chopper_enable_cnt and chopper_time_cnt < set_chopper_disable_cnt) then
 						chopper_ctrl_reg		<= '1';
 					else
-						if(chopper_time_cnt > set_chopper_disable_cnt) then
-							chopper_ctrl_reg		<= '0';
-						else
-							chopper_ctrl_reg		<= chopper_ctrl_reg;
-						end if;
+						chopper_ctrl_reg		<= '0';
 					end if;
 --				end if;
 			end if;
@@ -322,19 +307,15 @@ begin
 			send_enable		<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
-				if(Alice_H_Bob_L = '1') then
-					if(chopper_time_cnt >= set_send_enable_cnt ) then
+--				if(Alice_H_Bob_L = '1') then
+					if(chopper_time_cnt >= set_send_enable_cnt and chopper_time_cnt < set_send_disable_cnt) then
 						send_enable		<= '1';
 					else
-						if(chopper_time_cnt > set_send_disable_cnt) then
-							send_enable		<= '0';
-						else
-							send_enable		<= send_enable;
-						end if;
+						send_enable		<= '0';
 					end if;
-				else
-					send_enable		<= '0';
-				end if;
+--				else
+--					send_enable		<= '0';
+--				end if;
 			end if;
 		end if;
   end process;
@@ -389,20 +370,22 @@ begin
 		if(sys_rst_n = '0') then
 			syn_light_cnt		<= (others => '1');
 			exp_running_250M	<= '0';
-			send_enable_250M	<= '0';
+			send_enable_250M_sig	<= '0';
 			exp_running_reg	<= '0';
-			syn_light_sig	<= '0';
+			single_mode_sync	<= '0';
+			chopper_ctrl_sync	<= '0';
 		else
 			if(sys_clk_250M'event and sys_clk_250M = '1') then
-				syn_light_sig			<= chopper_ctrl_reg;
-				send_enable_250M		<= send_enable;
+				chopper_ctrl_sync			<= chopper_ctrl_reg;
+				single_mode_sync			<= single_mode;
+				send_enable_250M_sig		<= send_enable;
 				exp_running_reg		<= exp_running;
 				exp_running_250M		<= exp_running_reg;
 				if(exp_running_reg = '1') then
 					if(syn_light_cnt < DPS_round_cnt_reg) then
 						syn_light_cnt	<= syn_light_cnt + 1;
 					else
-						if(send_enable_250M = '1') then
+						if(send_enable_250M_sig = '1') then
 							syn_light_cnt	<= (others => '0');	
 						end if;		
 					end if;
@@ -413,15 +396,18 @@ begin
 		end if;
   end process;
   
-  ---syn light has 16 sys_clk_250M clock width
---  process(syn_light_cnt, DPS_syn_dly_cnt_reg, send_enable_250M) 
---  begin 
---		if(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_reg and send_enable_250M = '1') then
---			syn_light_sig	<= '1'; 
---		else
---			syn_light_sig	<= '0';
---		end if;
---  end process;
+  --syn light has 16 sys_clk_250M clock width
+  process(syn_light_cnt, DPS_syn_dly_cnt_reg, send_enable_250M_sig, single_mode_sync, chopper_ctrl_sync) 
+  begin --单模式下Chopper信号作为同步信号
+		if(single_mode_sync = '1') then
+			syn_light_sig	<= chopper_ctrl_sync; 
+			--非单模式下根据同步光计数产生同步信号
+		elsif(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_reg and send_enable_250M_sig = '1') then
+			syn_light_sig	<= '0';
+		else
+			syn_light_sig	<= '0';
+		end if;
+  end process;
   
   process(syn_light_cnt, DPS_round_cnt_AM, DPS_round_cnt_AM_sub64) 
   begin 

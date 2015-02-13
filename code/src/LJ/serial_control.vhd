@@ -418,7 +418,11 @@ process (valid2,dout2,delay_AM1,test_signal_delay_reg,exp_running)
 					serial_in_reg(0)	<= x"0";
 				else
 					if(valid2 = '1') then
-						serial_in_reg(0)	<= dout2(0) & dout2(0) & dout2(1) & dout2(1);--"0" & dout2(3) & "0" & dout2(0);
+						if(delay_AM1(23) = '0') then---Êä³ö2ns PM±àÂëÂö³å
+							serial_in_reg(0)	<= dout2(0) & dout2(0) & dout2(1) & dout2(1);--"0" & dout2(3) & "0" & dout2(0);
+						else--Êä³ö1ns±àÂëÂö³å
+							serial_in_reg(0)	<= dout2(0) & '0' & dout2(1) & '0';--"0" & dout2(3) & "0" & dout2(0);
+						end if;
 					else
 						serial_in_reg(0)	<= delay_AM1(31 downto 28);
 					end if;
