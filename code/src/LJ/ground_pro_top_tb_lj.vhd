@@ -367,8 +367,8 @@ rdn_gen : for i in 0 to 4-1 generate
 		
 		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A0";
-		cpld_fpga_data <= x"00000E00";
---		cpld_fpga_data <= x"00000E69";
+--		cpld_fpga_data <= x"00000E00";
+		cpld_fpga_data <= x"00000E69";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;

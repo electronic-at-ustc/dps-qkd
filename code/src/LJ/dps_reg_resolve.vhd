@@ -261,7 +261,7 @@ DPS_syn_dly_cnt	<= DPS_syn_dly_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		delay_AM1_reg			<=	x"C0000000";--default pm is 0110
+		delay_AM1_reg			<=	x"C0000008";--default pm is 0110
 --		delay_AM2_reg			<=	"01111";
 --		delay_PM_reg			<=	"01111";
 	elsif rising_edge(sys_clk_80M) then
@@ -294,7 +294,7 @@ end process;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		GPS_period_cnt_reg			<=	x"00030D40";---600ms 300MS phase steady 300ms test
+		GPS_period_cnt_reg			<=	x"00098968";---2.5ms @ 250MHz
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"03" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			GPS_period_cnt_reg	<= cpldif_dps_wr_data;
@@ -322,7 +322,7 @@ DPS_send_AM_dly_cnt	<= DPS_send_AM_dly_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		set_send_enable_cnt_reg			<=	x"0002EE00";--
+		set_send_enable_cnt_reg			<=	x"000927C0";--2.4ms @ 250MHz
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"05" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			set_send_enable_cnt_reg	<= cpldif_dps_wr_data;
@@ -334,7 +334,7 @@ set_send_enable_cnt	<= set_send_enable_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		set_send_disable_cnt_reg			<=	x"00030D00";--50us ÓàÁ¿
+		set_send_disable_cnt_reg			<=	x"000988A0";--2.49920ms @ 250MHz
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"06" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			set_send_disable_cnt_reg	<= cpldif_dps_wr_data;
@@ -346,7 +346,7 @@ set_send_disable_cnt	<= set_send_disable_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		set_chopper_enable_cnt_reg			<=	x"00000050";---50us ÓàÁ¿
+		set_chopper_enable_cnt_reg			<=	x"000000FA";---1us @ 250MHz
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"07" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			set_chopper_enable_cnt_reg	<= cpldif_dps_wr_data;
@@ -358,7 +358,7 @@ set_chopper_enable_cnt	<= set_chopper_enable_cnt_reg;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
-		set_chopper_disable_cnt_reg			<=	x"0002F000";--16E3600 is 300ms 200usÓàÁ¿
+		set_chopper_disable_cnt_reg			<=	x"00092E00";--2.4064ms @ 250MHz
 	elsif rising_edge(sys_clk_80M) then
 		if(addr_sel = x"08" and cpldif_dps_wr_en = '1' ) then--GPS period count REG
 			set_chopper_disable_cnt_reg	<= cpldif_dps_wr_data;

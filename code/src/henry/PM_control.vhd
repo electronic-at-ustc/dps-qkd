@@ -200,7 +200,7 @@ begin
 		offset_voltage_reg<=	x"999";--  -1.5V
 		half_wave_voltage_reg<=	x"547";--1.1V
 		minus_voltage<=	"001" & x"9A";--下限 1V
-		step_cnt_reg	<=	x"26";--38  扫点19次 算法5次 共24次 耗时2.4ms 最后一次用于设置最优值
+		step_cnt_reg	<=	x"24";--36  扫点18次 算法5次 共23次 耗时2.4ms 最后一次用于设置最优值持续到2.5ms
 		poc_cnt_set	<=	"0000000";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
