@@ -264,26 +264,17 @@ end process;
 	
 	-------------lut_ram_addr--------------
 	result_ok	<= result_ok_reg;
-	lut_ram_128_addra <= DAC_set_addr;
 	DAC_set_result <= DAC_set_result_ram;
 	lut_ram_128_wen	<= result_ok_reg;
 	lut_ram_128_dina	<= DAC_set_result_ram;
---	process(sys_clk, sys_rst) 
---	begin
---	if(sys_rst = '1') then
---		lut_ram_128_addra	<= (others => '0');
---	elsif sys_clk'event and sys_clk = '1' then 
---		if(addr_reset = '1') then
---			lut_ram_128_addra	<= (others => '0');
---		else
---			if(min_set_result_en = '1') then
---				lut_ram_128_addra	<= lut_ram_128_addra+1; --if（wen）
---			else
---				lut_ram_128_addra  <= lut_ram_128_addra;
---			end if;
---		end if;
---	end if;
---	end process;
+	process(sys_clk, sys_rst) 
+	begin
+	if(sys_rst = '1') then
+		lut_ram_128_addra	<= (others => '0');
+	elsif sys_clk'event and sys_clk = '1' then 
+		lut_ram_128_addra <= DAC_set_addr;
+	end if;
+	end process;
 	----1------
 	--判断count3， count1大小
 	--判断count4， count2大小

@@ -100,7 +100,7 @@ entity PM_control is
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
 		min_set_result : in STD_LOGIC_vector(11 downto 0);
 		-----
-		--syn_light : in std_logic;--when high, go into phase steady state
+		syn_light : in std_logic;--when high, go into phase steady state
 		chopper_ctrl : in std_logic--when high, go into phase steady state
 											--different with exp_running
 	);
@@ -146,6 +146,8 @@ signal chopper_ctrl_1d : std_logic;
 signal pm_steady_test_rising : std_logic;
 signal pm_steady_test_1d : std_logic;
 --signal set_onetime_end_1d : std_logic;
+signal single_start		: std_logic;
+signal single_start_d1	: std_logic;
 signal complete		: std_logic;
 signal wait_start_reg: std_logic;
 signal scan_data_store_en_1d: std_logic;
@@ -160,10 +162,14 @@ Sys_Rst <= not sys_rst_n;
 dly_pro : process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
+		single_start		<=	'0';
+		single_start_d1	<=	'0';
 		chopper_ctrl_1d	<=	'0';
 		pm_steady_test_1d	<=	'0';
 		scan_data_store_en_1d	<=	'0';
 	elsif rising_edge(sys_clk_80M) then
+		single_start		<=	syn_light and chopper_ctrl;
+		single_start_d1	<=	single_start_d1;
 		chopper_ctrl_1d	<=	chopper_ctrl;
 		pm_steady_test_1d	<=	pm_steady_test;
 		scan_data_store_en_1d	<=	scan_data_store_en;
@@ -194,8 +200,8 @@ begin
 		config_reg2<=	x"4F5"; --:-0.95V
 		config_reg3<=	x"6B8"; --:-0.4V
 		count_time_reg<=	X"01F4";--100us
-		pm_stable_cnt_reg<=	x"000A";--2us
-		poc_stable_cnt_reg<=	x"000A";--2us  
+		pm_stable_cnt_reg<=	x"001A";--2us
+		poc_stable_cnt_reg<=	x"001A";--2us  
 		scan_inc_cnt_reg <=	x"52";--步进0.2V 二次步进0.1V
 		offset_voltage_reg<=	x"999";--  -1.5V
 		half_wave_voltage_reg<=	x"547";--1.1V

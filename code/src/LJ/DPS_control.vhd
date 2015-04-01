@@ -213,7 +213,7 @@ begin
 			chopper_ctrl_reg		<= '0';
 		else
 			if(sys_clk_250M'event and sys_clk_250M = '1') then
-				if(chopper_time_cnt > set_chopper_enable_cnt_250m and chopper_time_cnt < set_chopper_disable_cnt_250m) then
+				if(chopper_time_cnt >= set_chopper_enable_cnt_250m and chopper_time_cnt < set_chopper_disable_cnt_250m) then
 					chopper_ctrl_reg		<= '1';
 				else
 					chopper_ctrl_reg		<= '0';
@@ -303,7 +303,7 @@ begin
 			syn_light_reg	<= chopper_ctrl_reg; 
 			--非单模式下根据同步光计数产生同步信号
 		elsif(syn_light_cnt(15 downto 4) = DPS_syn_dly_cnt_250m and send_enable = '1') then
-			syn_light_reg	<= '0';
+			syn_light_reg	<= '1';
 		else
 			syn_light_reg	<= '0';
 		end if;

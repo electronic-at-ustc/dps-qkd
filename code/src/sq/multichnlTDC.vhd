@@ -719,18 +719,26 @@ begin
 --      I => HitIn_p(i),  -- hit_p clock buffer input (connect directly to top-level port)
 --      IB => HitIn_n(i) -- hit_n clock buffer input (connect directly to top-level port)
 --   );
-	
-	IBUFDS_DIFF_OUT_inst : IBUFDS_DIFF_OUT
+	IBUFG_inst : IBUFG
    generic map (
-      DIFF_TERM => TRUE, -- Differential Termination 
       IBUF_LOW_PWR => FALSE, -- Low power (TRUE) vs. performance (FALSE) setting for refernced I/O standards
-      IOSTANDARD => "LVDS_25") -- Specify the input I/O standard
+      IOSTANDARD => "DEFAULT")
    port map (
-      O => HitIn_buf_p(i),     -- Buffer diff_p output
-      OB => HitIn_buf_n(i),   -- Buffer diff_n output
-      I => HitIn_p(i),  -- Diff_p buffer input (connect directly to top-level port)
-      IB => HitIn_n(i) -- Diff_n buffer input (connect directly to top-level port)
+      O => HitIn_buf_p(i), -- Clock buffer output
+      I => HitIn_p(i)  -- Clock buffer input (connect directly to top-level port)
    );
+	
+--	IBUFDS_DIFF_OUT_inst : IBUFDS_DIFF_OUT
+--   generic map (
+--      DIFF_TERM => TRUE, -- Differential Termination 
+--      IBUF_LOW_PWR => FALSE, -- Low power (TRUE) vs. performance (FALSE) setting for refernced I/O standards
+--      IOSTANDARD => "LVDS_25") -- Specify the input I/O standard
+--   port map (
+--      O => HitIn_buf_p(i),     -- Buffer diff_p output
+--      OB => HitIn_buf_n(i),   -- Buffer diff_n output
+--      I => HitIn_p(i),  -- Diff_p buffer input (connect directly to top-level port)
+--      IB => HitIn_n(i) -- Diff_n buffer input (connect directly to top-level port)
+--   );
 end generate;
 
 	HitIn_buf_p(1)	<= GPS_pulse_in;
@@ -758,13 +766,14 @@ begin
 --O => HitIn(i), -- 1-bit output: Clock buffer output
 --I => HitIn_tmp(i) -- 1-bit input: Clock buffer input
 --);
-   BUFGMUX_CTRL_inst : BUFGMUX_CTRL
-   port map (
-      O => HitIn(i),   -- 1-bit output: Clock buffer output
-      I0 => HitIn_buf_n(i), -- 1-bit input: Clock buffer input (S=0)
-      I1 => HitIn_buf_p(i), -- 1-bit input: Clock buffer input (S=1)
-      S => tdc_reg_in_level(i-1)    -- 1-bit input: Clock buffer select
-   );
+	  HitIn(i) <= HitIn_buf_p(i);
+--   BUFGMUX_CTRL_inst : BUFGMUX_CTRL
+--   port map (
+--      O => HitIn(i),   -- 1-bit output: Clock buffer output
+--      I0 => HitIn_buf_n(i), -- 1-bit input: Clock buffer input (S=0)
+--      I1 => HitIn_buf_p(i), -- 1-bit input: Clock buffer input (S=1)
+--      S => tdc_reg_in_level(i-1)    -- 1-bit input: Clock buffer select
+--   );
 end generate;	
 --hitin_bufg_inst_2: FOR i in 13 to 16 generate
 --begin

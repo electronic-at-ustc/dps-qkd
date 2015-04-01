@@ -372,6 +372,7 @@ COMPONENT clock_manage
 		lut_ram_128_addr : IN std_logic_vector(6 downto 0);
 		lut_ram_128_vld  : in std_logic;
 		chopper_ctrl : IN std_logic;          
+		syn_light : IN std_logic;          
 		pm_steady_test : IN std_logic; 
 		scan_data_store_en: in std_logic;
 		pm_data_store_en	: in std_logic;
@@ -763,6 +764,7 @@ PORT MAP(
 		sys_clk_80M => sys_clk,
 		sys_rst_n => sys_rst_n,
 		fifo_rst => fifo_clr,
+		syn_light => syn_light_ext,
 		dac_finish => dac_finish,
 		Dac_Ena => pm_dac_en,
 		dac_data => pm_dac_data,

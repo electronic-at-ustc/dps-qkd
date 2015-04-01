@@ -375,8 +375,8 @@ rdn_gen : for i in 0 to 4-1 generate
 		
 		wait until rising_edge(cpld_fpga_clk);
 		
---		cpld_fpga_sglwr	<=	'1';
---		cpld_fpga_addr	<=	x"A0";
+		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_addr	<=	x"A0";
 --		cpld_fpga_data <= x"00000E00";
 		cpld_fpga_data <= x"00000E54";
 		wait for cpld_fpga_clk_period;
@@ -386,19 +386,9 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for 200 ns;
 		wait until rising_edge(cpld_fpga_clk);
 --		
---		cpld_fpga_sglwr	<=	'1';
---		cpld_fpga_addr	<=	x"A5";
---		cpld_fpga_data <= x"0002EE00";--send enable 
-		wait for cpld_fpga_clk_period;
-		cpld_fpga_sglwr	<=	'0';
-		wait for cpld_fpga_clk_period*3;
-		
-		wait for 200 ns;
-		wait until rising_edge(cpld_fpga_clk);
---		
---		cpld_fpga_sglwr	<=	'1';
---		cpld_fpga_addr	<=	x"A6";
---		cpld_fpga_data <= x"00030D00";--send disable
+		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_addr	<=	x"A5";
+		cpld_fpga_data <= x"000927C0";--send enable 
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
@@ -406,9 +396,19 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for 200 ns;
 		wait until rising_edge(cpld_fpga_clk);
 		
---		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_addr	<=	x"A6";
+		cpld_fpga_data <= x"000988A0";--send disable
+		wait for cpld_fpga_clk_period;
+		cpld_fpga_sglwr	<=	'0';
+		wait for cpld_fpga_clk_period*3;
+		
+		wait for 200 ns;
+		wait until rising_edge(cpld_fpga_clk);
+		
+		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A7";
-		cpld_fpga_data <= x"00000050";--chopper enable 1us
+		cpld_fpga_data <= x"000000FA";--chopper enable 1us
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
@@ -416,9 +416,9 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait for 200 ns;
 		wait until rising_edge(cpld_fpga_clk);
 		
---		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A8";
-		cpld_fpga_data <= x"0002F000";--chopper disable
+		cpld_fpga_data <= x"00092E00";--chopper disable
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;
@@ -427,10 +427,10 @@ rdn_gen : for i in 0 to 4-1 generate
 		wait until rising_edge(cpld_fpga_clk);
 --		
 		--设置实验运行周期计数
---		cpld_fpga_sglwr	<=	'1';
+		cpld_fpga_sglwr	<=	'1';
 		cpld_fpga_addr	<=	x"A3";
 --		cpld_fpga_data <= x"00027100";
-		cpld_fpga_data <= x"00030D40";
+		cpld_fpga_data <= x"00098968";
 		wait for cpld_fpga_clk_period;
 		cpld_fpga_sglwr	<=	'0';
 		wait for cpld_fpga_clk_period*3;

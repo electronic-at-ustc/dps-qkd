@@ -296,15 +296,16 @@ begin
 end process;
 
 min_set_result		<= min_dac;
+min_set_result_en	<= one_time_end;
 process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
 		min_cnt				<= (others => '1');
 		min_dac				<= (others => '0');
-		min_set_result_en	<= '0';
+--		min_set_result_en	<= '0';
 	elsif rising_edge(sys_clk_80M) then
-		min_set_result_en	<= one_time_end;
-		if(wait_finish_reg = '1' and wait_dac_cnt /= 0 and chopper_ctrl = '1') then ---10 counter
+--		min_set_result_en	<= one_time_end;
+		if(wait_finish_reg = '1' and wait_dac_cnt > 4 and chopper_ctrl = '1') then ---10 counter
 			if(use_4apd = '1') then
 				if(apd_cnt_reg(0) <= min_cnt) then
 					min_cnt	<= apd_cnt_reg(0);

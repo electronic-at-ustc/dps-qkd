@@ -91,7 +91,7 @@ port(
 		alg_data_wr			: out	std_logic;
 		alg_data_wr_data	: out	std_logic_vector(47 downto 0);
 		
-		---syn_light : in std_logic;--when high, go into phase steady state
+		syn_light : in std_logic;--when high, go into phase steady state
 		chopper_ctrl : in std_logic--when high, go into phase steady state
 	);
 end PM_receive;
@@ -163,7 +163,7 @@ architecture Behavioral of PM_receive      is
 		addr_reset : out std_logic;
 		chopper_ctrl : IN std_logic;    
 		one_time_end		: out std_logic;
---		Dac_CLK : OUT std_logic;
+		syn_light : IN std_logic;
 		Dac_Ena : OUT std_logic;
 		Dac_Data : OUT std_logic_vector(11 downto 0);
 		half_wave_voltage : out std_logic_vector(11 downto 0);
@@ -316,6 +316,7 @@ begin
 		Dac_Ena => Dac_Ena,
 		Dac_Data => DAC_set_data,
 		Sys_Rst =>  Sys_Rst,
+		syn_light =>  syn_light,
 		lut_ram_128_vld =>  lut_ram_128_vld,
 		lut_ram_128_addr =>  lut_ram_128_addr,
 		Dac_set_result => Dac_set_result,
