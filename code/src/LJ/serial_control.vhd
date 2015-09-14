@@ -307,7 +307,7 @@ end generate;
       O => SERIAL_OUT_p(2),     -- Diff_p output (connect directly to top-level port)
       OB => SERIAL_OUT_n(2),   -- Diff_n output (connect directly to top-level port)
 --      I => delay_in(3)      -- Buffer input 
-      I => serial_out_clk      -- Buffer input 
+      I => serial_fifo_rd_clk--serial_out_clk      -- Buffer input 
    );
 	
 --	BUFGMUX_inst : BUFGMUX
