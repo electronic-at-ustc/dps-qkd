@@ -93,7 +93,8 @@ entity DPS_QKD is
 			Dac_Sclk   			: out  STD_LOGIC; --DAC chip clock
 			Dac_Csn    			: out  STD_LOGIC; --DAC chip select
 			Dac_Din    			: out  STD_LOGIC; --DAC data input
-			
+			--
+			syn_pulse_cnt			: out	std_logic_vector(31 downto 0);
 			----end Bob---
 			send_en_AM_p				:  out std_logic;--250M clock domain
 			send_en_AM_n				:  out std_logic;--250M clock domain
@@ -310,6 +311,7 @@ COMPONENT clock_manage
 		syn_light : OUT std_logic;
 		chopper_ctrl : OUT std_logic;
 		chopper_ctrl_80M : OUT std_logic;
+		syn_pulse_cnt			: out	std_logic_vector(31 downto 0);
 --		send_en_AM_p				:  out std_logic;--250M clock domain
 --	   send_en_AM_n				:  out std_logic;--250M clock domain
 		APD_tdc_en : OUT std_logic;
@@ -693,6 +695,7 @@ PORT MAP(
 		exp_running_250M => exp_running_250M,
 		Alice_H_Bob_L => Alice_H_Bob_L,
 		gps_pulse => gps_pps,
+		syn_pulse_cnt => syn_pulse_cnt,
 		GPS_period_cnt => GPS_period_cnt,
 		GPS_pulse_int => GPS_pulse_int,
 		APD_tdc_en => APD_tdc_en,
