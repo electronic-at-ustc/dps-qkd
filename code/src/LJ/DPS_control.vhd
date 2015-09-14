@@ -49,6 +49,7 @@ entity DPS_control is
 	  DPS_syn_dly_cnt			: in	std_logic_vector(11 downto 0);
 	  DPS_round_cnt			: in	std_logic_vector(15 downto 0);
 	  DPS_chopper_cnt			: in	std_logic_vector(3 downto 0);
+	  syn_pulse_cnt			: out	std_logic_vector(31 downto 0);
 	  
 	  set_send_enable_cnt	: in	std_logic_vector(31 downto 0);--for Alice
 	  set_send_disable_cnt	: in	std_logic_vector(31 downto 0);--for Alice
@@ -75,7 +76,10 @@ entity DPS_control is
 end DPS_control;
 
 architecture Behavioral of DPS_control is
-	 signal  exp_running_250m_sig					: std_logic;--2500M clock domain
+	 signal  syn_light_80m_reg					: std_logic;--80M clock domain
+	 signal  syn_light_80m_reg_d1				: std_logic;--80M clock domain
+	 signal  syn_light_80m_reg_d2				: std_logic;--80M clock domain
+	 signal  exp_running_250m_sig				: std_logic;--250M clock domain
 	 signal  Alice_H_Bob_L_250m				: std_logic;--250M clock domain
 	 signal  single_mode_250m 					: std_logic;--250M clock domain
 	  
@@ -124,6 +128,7 @@ architecture Behavioral of DPS_control is
 	
 	
 	signal gps_count32			: std_logic_vector(30 downto 0):=(others => '0');--gps period control count
+	signal syn_pulse_cnt_reg	: std_logic_vector(31 downto 0):=(others => '0');--一次实验中同步信号的个数
 	
 	
 begin
@@ -192,7 +197,7 @@ begin
 					if(single_mode_250m = '1') then--单模式下 同步脉冲在Chopper上升沿发出
 						chopper_time_cnt	<= set_chopper_enable_cnt_250m(30 downto 0);
 					else--非单模式下 同步脉冲在send enable上升沿后DPS_syn_dly_cnt_250m发出
-						chopper_time_cnt	<= set_send_enable_cnt_250m(30 downto 0) + DPS_syn_dly_cnt_250m;
+						--chopper_time_cnt	<= set_send_enable_cnt_250m(30 downto 0) + DPS_syn_dly_cnt_250m;
 					end if;
 				else
 					if(chopper_time_cnt < GPS_period_cnt_250m(30 downto 0)) then
@@ -375,6 +380,34 @@ begin
 			end if;
 		end if;
   end process;
+  process(sys_clk_80M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			exp_running_d1				<= '0';
+			exp_running_reg			<= '0';
+			syn_light_80m_reg			<= '0';
+			syn_light_80m_reg_d1		<= '0';
+			syn_light_80m_reg_d2		<= '0';
+			syn_pulse_cnt_reg	<= (others => '0');
+		else
+			if(sys_clk_80M'event and sys_clk_80M = '1') then
+				syn_light_80m_reg		<= syn_light_reg;
+				syn_light_80m_reg_d1	<= syn_light_80m_reg;
+				syn_light_80m_reg_d2	<= syn_light_80m_reg_d1;
+				exp_running_reg	<= exp_running;
+				exp_running_d1		<= exp_running_reg;
+				if(exp_running_reg = '1' and exp_running_d1 = '0') then--发射端需要 Chopper 用于在其上升沿或下降沿控制AM DAC电压控制
+					syn_pulse_cnt_reg	<= (others => '0');--when start of exp, clear syn pulse count to 0				
+				else
+					if(syn_light_80m_reg_d2 = '0' and syn_light_80m_reg_d1 = '1') then---rising edge of syn_light
+						syn_pulse_cnt_reg		<= syn_pulse_cnt_reg+1;
+					end if;
+				end if;
+			end if;
+		end if;
+  end process;
+  
+  syn_pulse_cnt	<= syn_pulse_cnt_reg;
   
 end Behavioral;
 
