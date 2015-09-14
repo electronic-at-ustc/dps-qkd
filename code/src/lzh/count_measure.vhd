@@ -47,6 +47,7 @@ entity count_measure is
 		qtel_hit : 	in	std_logic_vector(tdc_chl_num-1 downto 0);
 		---tdc module
 		tdc_count_time_value	:	in	std_logic_vector(31 downto 0);
+		syn_pulse_cnt	:	in	std_logic_vector(31 downto 0);
 		---cpldif module
 		cpldif_count_addr	:	in	std_logic_vector(7 downto 0);
 		cpldif_count_wr_en	:	in	std_logic;
@@ -163,7 +164,7 @@ begin
 				when X"01"	=>	rd_data_reg	<=	chnl_cnt_reg(1);--read count of channel 1
 				when X"02"	=>	rd_data_reg	<=	chnl_cnt_reg(2);--read count of channel 2
 				when X"03"	=>	rd_data_reg	<=	chnl_cnt_reg(3);--read count of channel 3
---				when X"04"	=>	rd_data_reg	<=	chnl_cnt_reg(4);--read count of channel 4
+				when X"04"	=>	rd_data_reg	<=	syn_pulse_cnt;--read count of channel 4
 --				when X"05"	=>	rd_data_reg	<=	chnl_cnt_reg(5);--read count of channel 5
 --				when X"06"	=>	rd_data_reg	<=	chnl_cnt_reg(6);--read count of channel 6
 --				when X"07"	=>	rd_data_reg	<=	chnl_cnt_reg(7);--read count of channel 7
