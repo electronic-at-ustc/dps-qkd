@@ -93,10 +93,15 @@ end PM_count;
 architecture Behavioral of PM_count is
 type MultiChnlCountType is array(0 to tdc_chl_num-1) of std_logic_vector(9 downto 0); ----×Ü½á
 signal apd_cnt_reg   : MultiChnlCountType;
+signal apd_cnt_reg_mux : std_logic_vector(9 downto 0);
+signal apd_cnt_reg_0   : std_logic_vector(9 downto 0);
+signal apd_cnt_reg_1   : std_logic_vector(9 downto 0);
 --constant  msecond		: std_logic_vector(19 downto 0) := X"13880";  --*12.5=1ms
 --constant  usecned 	: std_logic_vector(11 downto 0) := X"320";   --*12.5=10us
 signal stable_cnt		: std_logic_vector(19 downto 0) ;
-signal min_cnt		: std_logic_vector(9 downto 0) ;
+signal min_cnt			: std_logic_vector(11 downto 0) ;
+signal apd_cnt_reg_sum : std_logic_vector(11 downto 0) ;
+signal dac_set_data_pre: std_logic_vector(11 downto 0) ;
 signal min_dac		: std_logic_vector(11 downto 0) ;
 --signal count_en_1d		: std_logic;
 --signal count_en_rising		: std_logic;
@@ -196,9 +201,15 @@ begin
 	if(sys_rst_n = '0') then
 		apd_fpga_hit_1d	<=	(others => '0');
 		apd_fpga_hit_2d	<=	(others => '0');
+		apd_cnt_reg_mux	<=	(others => '0');
 	elsif rising_edge(sys_clk_80M) then
 		apd_fpga_hit_1d	<=	apd_fpga_hit;
 		apd_fpga_hit_2d	<=	apd_fpga_hit_1d;
+		if(use_4apd = '1') then
+			apd_cnt_reg_mux	<= apd_cnt_reg(0);
+		else	---default is APD 2
+			apd_cnt_reg_mux	<= apd_cnt_reg(1);
+		end if;
 	end if;
 end process;
 
@@ -285,7 +296,7 @@ begin
 				else
 					if(one_time_end = '1' and pm_data_store_en = '1') then
 						alg_data_wr					<= '1';
-						alg_data_wr_data			<=	x"C00" & "00" & min_cnt & "0" & DAC_set_addr & x"0" & min_dac;
+						alg_data_wr_data			<=	x"C00" & min_cnt & "0" & DAC_set_addr & x"0" & min_dac;
 					else
 						alg_data_wr					<= '0';
 					end if;
@@ -302,25 +313,31 @@ begin
 	if(sys_rst_n = '0') then
 		min_cnt				<= (others => '1');
 		min_dac				<= (others => '0');
+		apd_cnt_reg_0		<= (others => '0');
+		apd_cnt_reg_1		<= (others => '0');
+		dac_set_data_pre	<= (others => '0');
 --		min_set_result_en	<= '0';
 	elsif rising_edge(sys_clk_80M) then
 --		min_set_result_en	<= one_time_end;
 		if(wait_finish_reg = '1' and wait_dac_cnt > 4 and chopper_ctrl = '1') then ---10 counter
-			if(use_4apd = '1') then
-				if(apd_cnt_reg(0) <= min_cnt) then
-					min_cnt	<= apd_cnt_reg(0);
-					min_dac	<= dac_set_data;
-				end if;
-			else	---default is APD 2
-				if(apd_cnt_reg(1) <= min_cnt) then
-					min_cnt	<= apd_cnt_reg(1);
-					min_dac	<= dac_set_data;
+			apd_cnt_reg_0		<= apd_cnt_reg_mux;
+			apd_cnt_reg_1		<= apd_cnt_reg_0;
+			dac_set_data_pre	<= dac_set_data;
+			
+			if(wait_dac_cnt > 7) then
+				if(apd_cnt_reg_sum <= min_cnt) then
+					min_cnt	<= apd_cnt_reg_sum;
+					min_dac	<= dac_set_data_pre;
 				end if;
 			end if;
 		elsif(one_time_end = '1') then
 			min_cnt			<= (others => '1');
 		end if;
 	end if;
+end process;
+
+process(apd_cnt_reg_sum, apd_cnt_reg_mux, apd_cnt_reg_0, apd_cnt_reg_1) begin
+	apd_cnt_reg_sum 	<= ("00"&apd_cnt_reg_mux) + ("00"&apd_cnt_reg_0) + ("00"&apd_cnt_reg_1);
 end process;
 
 end Behavioral;
