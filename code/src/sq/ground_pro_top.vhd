@@ -290,6 +290,7 @@ architecture Behavioral of ground_pro_top is
 		GPS_pulse_int			:  out std_logic;--80M clock domain
 		GPS_pulse_int_active	:  out std_logic;--80M clock domain
 		dps_cpldif_rd_data : OUT std_logic_vector(31 downto 0);
+		syn_pulse_cnt : OUT std_logic_vector(31 downto 0);
 		apd_fpga_hit	: 	in	std_logic_vector(1 downto 0);--apd pulse input
 		dps_cpldif_fifo_clr : in std_logic;
 		dps_cpldif_fifo_wr_en : OUT std_logic;
@@ -333,6 +334,7 @@ architecture Behavioral of ground_pro_top is
 		qtel_hit : IN std_logic_vector(tdc_chl_num-1 downto 0);
 		apd_fpga_hit_in : IN std_logic_vector(tdc_chl_num-1 downto 0);
 		tdc_count_time_value : IN std_logic_vector(31 downto 0);
+		syn_pulse_cnt : IN std_logic_vector(31 downto 0);
 		cpldif_count_addr : IN std_logic_vector(7 downto 0);
 		cpldif_count_wr_en : IN std_logic;
 		cpldif_count_rd_en : IN std_logic;
@@ -368,6 +370,7 @@ architecture Behavioral of ground_pro_top is
 	signal tdc_cpldif_rd_data : std_logic_vector(31 downto 0);
 	signal time_cpldif_rd_data : std_logic_vector(31 downto 0);
 	signal time_local_cur : std_logic_vector(47 downto 0);
+	signal syn_pulse_cnt : std_logic_vector(31 downto 0);
 	signal gps_pps	:	std_logic;
 	signal tdc_data_store_en	:	std_logic;
 	signal tdc_count_hit : std_logic_vector(tdc_chl_num-1 downto 0);	
@@ -608,6 +611,7 @@ Tp(8)<= '0';--TP22
 		syn_light_sel => syn_light_sel,
 		sys_rst_n => sys_rst_n,
 		fifo_clr => tdc_cpldif_fifo_clr,
+		syn_pulse_cnt => syn_pulse_cnt,
 		exp_running => exp_running,
 		gps_pps => gps_pps,
 		cpldif_dps_addr => cpldif_addr,
@@ -657,7 +661,7 @@ Tp(8)<= '0';--TP22
 		sys_clk_80M => sys_clk_160M,
 		sys_rst_n => sys_rst_n,
 		qtel_en => qtel_en,
---		chopper_ctrl => chopper_ctrl_80M,
+		syn_pulse_cnt => syn_pulse_cnt,
 		apd_fpga_hit_in => tdc_count_hit,
 		qtel_hit =>qtel_counter_match,
 		tdc_count_time_value => time_local_cur(31 downto 0),
