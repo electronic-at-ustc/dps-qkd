@@ -51,6 +51,7 @@ entity DPS_QKD is
 			---gps interface  
 			exp_running	:	in std_logic;
 			gps_pps		:	in std_logic;
+			syn_light_awg	:	in std_logic;
 			
 		   GPS_pulse_int			:  out std_logic;--80M clock domain
 		   GPS_pulse_int_active	:  out std_logic;--80M clock domain
@@ -81,8 +82,9 @@ entity DPS_QKD is
 			APD_tdc_en				:  out std_logic;--80M clock domain
 --			chopper_ctrl_80M			:  out  std_logic;--80M clock domain, 1: disable tdc, 0 enable tdc
          syn_light					:  out  STD_LOGIC;
-         PPG_start					:	OUT std_logic;--serial output enable
-         PPG_clock					:	OUT std_logic;--10MHz
+         syn_light_awg_out			:  out  STD_LOGIC;
+--         PPG_start					:	OUT std_logic;--serial output enable
+--         PPG_clock					:	OUT std_logic;--10MHz
 			
 			-----Bob------
 			syn_light_sel		:	out	std_logic;
@@ -293,6 +295,7 @@ COMPONENT clock_manage
 		single_mode : IN std_logic;
 		gps_pulse : IN std_logic;
 		syn_light_ext : IN std_logic;
+		syn_light_awg : IN std_logic;
 		DPS_send_PM_dly_cnt : IN std_logic_vector(7 downto 0);
 		DPS_send_AM_dly_cnt : IN std_logic_vector(7 downto 0);
 		DPS_syn_dly_cnt : IN std_logic_vector(11 downto 0);
@@ -314,6 +317,7 @@ COMPONENT clock_manage
 		syn_pulse_cnt			: out	std_logic_vector(31 downto 0);
 --		send_en_AM_p				:  out std_logic;--250M clock domain
 --	   send_en_AM_n				:  out std_logic;--250M clock domain
+		syn_light_awg_out : OUT std_logic;
 		APD_tdc_en : OUT std_logic;
 		send_en_AM : OUT std_logic;
 		send_en : OUT std_logic
@@ -540,7 +544,7 @@ Inst_clock_manage: clock_manage PORT MAP(
 		CLK_OUT4 => open,
 		CLK_OUT5 => open
 	);
-	PPG_clock	<= send_en;
+--	PPG_clock	<= send_en;
 	
 Inst_Rnd_Gen_TOP: Rnd_Gen_TOP 
 generic map (
@@ -684,7 +688,7 @@ PORT MAP(
 		dps_cpldif_rd_data => dps_cpldif_rd_data
 	);
 	
-	PPG_start	<= chopper_ctrl_sig;
+--	PPG_start	<= chopper_ctrl_sig;
 	chopper_ctrl<= chopper_ctrl_send;
 	Inst_DPS_control: DPS_control PORT MAP(
 		sys_clk_80M => sys_clk,
@@ -717,6 +721,8 @@ PORT MAP(
 		chopper_ctrl_80M => chopper_ctrl_sig,
 --		send_en_AM_p => send_en_AM_p,
 --		send_en_AM_n => send_en_AM_n,
+		syn_light_awg => syn_light_awg,
+		syn_light_awg_out => syn_light_awg_out,
 		send_en_AM => send_en_AM,
 		send_en => send_en
 	);
@@ -815,5 +821,6 @@ PORT MAP(
 	
 	SERIAL_OUT_p(2)	<= SERIAL_OUT_p_reg(2);
 	SERIAL_OUT_n(2)	<= SERIAL_OUT_n_reg(2);
+
 end Behavioral;
 

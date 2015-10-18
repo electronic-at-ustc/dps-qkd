@@ -135,9 +135,12 @@ entity ground_pro_top is
 	  
 	  chopper_ctrl					: out  STD_LOGIC;
 	  syn_light						: out  STD_LOGIC;
+	  syn_light_awg_out			: out  STD_LOGIC;
 	  
 	  ----for Bob
+		
 		syn_light_ext		:	in	std_logic;
+		syn_light_ext_awg	:	in	std_logic;
 		POC_start			:	out std_logic_vector(6 downto 0);--serial output
 		POC_stop				:	out std_logic_vector(6 downto 0);--serial output
 		
@@ -146,8 +149,9 @@ entity ground_pro_top is
 		Dac_Din    			: out  STD_LOGIC; --DAC data input
 		----end for Bob	
 	  
-	  PPG_start					:	OUT std_logic;--serial output enable
-     PPG_clock					:	OUT std_logic;--10MHz
+--	  PPG_start					:	OUT std_logic;--serial output enable
+--     PPG_clock					:	OUT std_logic;--10MHz
+		syn_light_awg		 :	in	std_logic;
 		send_en_AM_p				:  out std_logic;--250M clock domain
 		send_en_AM_n				:  out std_logic;--250M clock domain
 		SERIAL_OUT_p			:	out std_logic_vector(2 downto 0);--serial output
@@ -281,6 +285,7 @@ architecture Behavioral of ground_pro_top is
 		fifo_clr : IN std_logic;
 		exp_running	:	IN std_logic;
 		gps_pps : IN std_logic;
+		syn_light_awg : IN std_logic;
 		cpldif_dps_addr : IN std_logic_vector(7 downto 0);
 		cpldif_dps_wr_en : IN std_logic;
 		cpldif_dps_wr_data : IN std_logic_vector(31 downto 0);
@@ -301,6 +306,7 @@ architecture Behavioral of ground_pro_top is
 		chopper_ctrl					: out  STD_LOGIC;
 		APD_tdc_en						: out  STD_LOGIC;
 		----for Bob
+		syn_light_awg_out		:	out	std_logic;
 		syn_light_sel		:	out	std_logic;
 		syn_light_ext		:	in	std_logic;
 		POC_start			:	out std_logic_vector(6 downto 0);--serial output
@@ -311,8 +317,8 @@ architecture Behavioral of ground_pro_top is
 		Dac_Din    			: out  STD_LOGIC; --DAC data input
 		----end for Bob	
       syn_light						: out  STD_LOGIC;
-		PPG_start					:	OUT std_logic;--serial output enable
-      PPG_clock					:	OUT std_logic;--10MHz
+--		PPG_start					:	OUT std_logic;--serial output enable
+--      PPG_clock					:	OUT std_logic;--10MHz
 		send_en_AM_p				:  out std_logic;--250M clock domain
 		send_en_AM_n				:  out std_logic;--250M clock domain
 		SERIAL_OUT_p			:	out std_logic_vector(2 downto 0);--serial output
@@ -410,6 +416,7 @@ architecture Behavioral of ground_pro_top is
 	signal GPS_pulse_int_active:  std_logic;--80M clock domain
 	
 	signal syn_light_int			:  std_logic;--80M clock domain
+	signal syn_light_awg_out_sig:  std_logic;--80M clock domain
 	signal syn_light_in			:  std_logic;--80M clock domain
 	signal syn_light_sel			:  std_logic;--80M clock domain
 	
@@ -466,12 +473,13 @@ Tp(8)<= '0';--TP22
 	MUXF7_inst2 : MUXF7
 	port map (
 		O => syn_light_in, -- Output of MUX to general routing
-		I0 => syn_light_ext, -- Input (tie to MUXF6 LO out or LUT6 O6 pin) 
-		I1 => syn_light_int, -- Input (tie to MUXF6 LO out or LUT6 O6 pin)
+		I0 => syn_light_ext_awg, -- Input (tie to MUXF6 LO out or LUT6 O6 pin) 
+		I1 => syn_light_awg_out_sig, -- Input (tie to MUXF6 LO out or LUT6 O6 pin)
 		S => syn_light_sel -- Input select to MUX 1: I1; 0: I0
 		---1£º Alice, 0: Bob
 	);
 	syn_light	<= syn_light_int;
+	syn_light_awg_out	<= syn_light_awg_out_sig;
 	Inst_multichnlTDC: multichnlTDC 
 		generic map(
 		tdc_basic_addr	=> TDC_Base_Addr,
@@ -641,10 +649,13 @@ Tp(8)<= '0';--TP22
 		Dac_Sclk   			=>Dac_Sclk,
 		Dac_Csn    			=>Dac_Csn,
 		Dac_Din    			=>Dac_Din,
+		
+		syn_light_awg => syn_light_awg,
+		syn_light_awg_out => syn_light_awg_out_sig,
 		----end for Bob	
 		syn_light => syn_light_int,
-		PPG_start => ppg_start,--PPG_start,
-		PPG_clock => PPG_clock,--PPG_clock,
+--		PPG_start => ppg_start,--PPG_start,
+--		PPG_clock => PPG_clock,--PPG_clock,
 		send_en_AM_p => open,--send_en_AM_p,
 		send_en_AM_n => open,--send_en_AM_n,
 		SERIAL_OUT_p => SERIAL_OUT_p,

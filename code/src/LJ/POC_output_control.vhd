@@ -212,9 +212,9 @@ begin
 		chopper_ctrl_d1<= '0';
 		chopper_ctrl_r <= '0';
 		chopper_ctrl_f <= '0';
-		dac_chA_high 	<= x"4800";
+		dac_chA_high 	<= x"4B00";--发射端输出的DAC高电平能到5V
 		dac_chA_low 	<= x"4000";
-		dac_chB_high 	<= x"C800";
+		dac_chB_high 	<= x"CB00";--发射端输出的DAC高电平能到5V
 		dac_chB_low 	<= x"C000";
 	elsif rising_edge(sys_clk) then
 		send_enable_d1		<= send_enable;

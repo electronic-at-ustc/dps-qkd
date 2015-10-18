@@ -67,7 +67,9 @@ entity DPS_control is
 	  chopper_ctrl_80M		:  out std_logic;--80M clock domain
 --	  send_en_AM_p				:  out std_logic;--250M clock domain
 --	  send_en_AM_n				:  out std_logic;--250M clock domain
+	  syn_light_awg			:  in std_logic;--250M clock domain
 	  syn_light_ext			:  in std_logic;--250M clock domain
+	  syn_light_awg_out		:  out std_logic;--250M clock domain
 	  syn_light					:  out std_logic;--250M clock domain
 	  send_en_AM				:  out std_logic;--250M clock domain
 	  send_en					:  out std_logic--250M clock domain
@@ -76,6 +78,8 @@ entity DPS_control is
 end DPS_control;
 
 architecture Behavioral of DPS_control is
+	 signal  syn_light_awg_inv					: std_logic;--awg latch clear
+	 signal  CLR_awg								: std_logic;--awg latch clear
 	 signal  syn_light_80m_reg					: std_logic;--80M clock domain
 	 signal  syn_light_80m_reg_d1				: std_logic;--80M clock domain
 	 signal  syn_light_80m_reg_d2				: std_logic;--80M clock domain
@@ -85,7 +89,7 @@ architecture Behavioral of DPS_control is
 	  
 	 signal  GPS_period_cnt_250m				: std_logic_vector(31 downto 0);--bit 31: 1 use intenal gps; 0 use external gps
 	  
-	 signal  DPS_send_PM_dly_cnt_250m		: std_logic_vector(7 downto 0);
+--	 signal  DPS_send_PM_dly_cnt_250m		: std_logic_vector(7 downto 0);
 	 signal  DPS_send_AM_dly_cnt_250m		: std_logic_vector(7 downto 0);
 	 signal  DPS_syn_dly_cnt_250m				: std_logic_vector(11 downto 0);
 	 signal  DPS_round_cnt_250m				: std_logic_vector(15 downto 0);
@@ -101,7 +105,7 @@ architecture Behavioral of DPS_control is
 	signal exp_running_d1 : std_logic;
 	
 	signal chopper_ctrl_reg	: std_logic;
-	signal chopper_ctrl_cnt	: std_logic_vector(3 downto 0);
+--	signal chopper_ctrl_cnt	: std_logic_vector(3 downto 0);
 	signal chopper_time_cnt	: std_logic_vector(30 downto 0);
 	
 	signal syn_light_ext_250m	: std_logic;
@@ -112,7 +116,7 @@ architecture Behavioral of DPS_control is
 	
 	signal send_en_AM_reg 			: std_logic;
 	signal send_en_PM_reg 			: std_logic;
-	signal pm_steady_enable			: std_logic;
+--	signal pm_steady_enable			: std_logic;
 	
 	signal chopper_ctrl_reg_d1			: std_logic;
 	signal is_send_first_syn			: std_logic;
@@ -368,6 +372,7 @@ begin
   begin 
 		if(sys_rst_n = '0') then
 			chopper_ctrl		<= '0';
+			chopper_ctrl_80m	<= '0';
 		else
 			if(sys_clk_80M'event and sys_clk_80M = '1') then
 				if(Alice_H_Bob_L = '1') then--发射端需要 Chopper 用于在其上升沿或下降沿控制AM DAC电压控制
@@ -407,7 +412,52 @@ begin
 		end if;
   end process;
   
-  syn_pulse_cnt	<= syn_pulse_cnt_reg;
+  process(sys_clk_250M, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			CLR_awg	<= '0';
+		else
+			if(sys_clk_250M'event and sys_clk_250M = '1') then
+				if(syn_light_cnt < DPS_round_cnt_AM_sub64) then
+					CLR_awg	<= '1'; 
+				else
+					CLR_awg	<= '0';
+				end if;
+			end if;
+		end if;
+  end process;
+--  process(syn_light_cnt,DPS_round_cnt_AM_sub64) 
+--  begin 
+--		if(syn_light_cnt < DPS_round_cnt_AM_sub64) then
+--			CLR_awg	<= '1'; 
+--		else
+--			CLR_awg	<= '0';
+--		end if;
+--  end process;
   
+  syn_pulse_cnt	<= syn_pulse_cnt_reg;
+--  LDCE_inst : LDCE
+--   generic map (
+--      INIT => '0') -- Initial value of latch ('0' or '1')  
+--   port map (
+--      Q => syn_light_awg_out,      -- Data output
+--      CLR => CLR_awg,  -- Asynchronous clear/reset input
+--      D => send_en_AM_reg,      -- Data input
+--      G => syn_light_awg,      -- Gate input
+--      GE => '1'     -- Gate enable input
+--   );
+	
+	FDCE_inst : FDCE
+   generic map (
+      INIT => '0') -- Initial value of register ('0' or '1')  
+   port map (
+      Q => syn_light_awg_out,      -- Data output
+      C => syn_light_awg,      -- Clock input
+      CE => '1',    -- Clock enable input
+      CLR => CLR_awg,  -- Asynchronous clear input
+      D => '1'       -- Data input
+   );
+  
+  syn_light_awg_inv <= not syn_light_awg;
 end Behavioral;
 
