@@ -473,6 +473,8 @@ Tp(8)<= '0';--TP22
 	MUXF7_inst2 : MUXF7
 	port map (
 		O => syn_light_in, -- Output of MUX to general routing
+--		I0 => syn_light_ext, -- Input (tie to MUXF6 LO out or LUT6 O6 pin) 
+--		I1 => syn_light_int, -- Input (tie to MUXF6 LO out or LUT6 O6 pin)
 		I0 => syn_light_ext_awg, -- Input (tie to MUXF6 LO out or LUT6 O6 pin) 
 		I1 => syn_light_awg_out_sig, -- Input (tie to MUXF6 LO out or LUT6 O6 pin)
 		S => syn_light_sel -- Input select to MUX 1: I1; 0: I0

@@ -94,6 +94,7 @@ signal sys_rst_buf    		:   std_logic;--internal
 signal sys_rst_high_cnt		: 	 std_logic_vector(15 downto 0) := (others => '0');
 signal sys_rst_cnt			: 	 std_logic_vector(3 downto 0);
 signal LOCKED_0 				: std_logic;
+signal ext_clk 				: std_logic;
 
 begin
 
@@ -108,6 +109,15 @@ begin
 --		I => ext_clk_I, -- Diff_p buffer input (connect directly to top-level port)
 --		IB => ext_clk_IB -- Diff_n buffer input (connect directly to top-level port)
 --	);
+	IBUFGDS_inst : IBUFGDS
+   generic map (
+      IBUF_LOW_PWR => FALSE, -- Low power (TRUE) vs. performance (FALSE) setting for referenced I/O standards
+      IOSTANDARD => "DEFAULT")
+   port map (
+      O => ext_clk,  -- Clock buffer output
+      I => ext_clk_I,  -- Diff_p clock buffer input
+      IB => ext_clk_IB -- Diff_n clock buffer input
+   );
 
   DCM_inst : DCM_SING_IN
   port map
@@ -129,7 +139,7 @@ begin
 	CLK_OUT1	<= clk1;
 	CLK_OUT2	<= clk2;
 	CLK_OUT3	<= clk3;
-	CLK_OUT4	<= '0';
+	CLK_OUT4	<= ext_clk;
 	CLK_OUT5	<= '0';
 	
 --	sys_rst_h	<= sys_rst_in;

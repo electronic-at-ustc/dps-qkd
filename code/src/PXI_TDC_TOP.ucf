@@ -237,8 +237,10 @@ NET "SERIAL_OUT_p[0]" LOC = U33;### J23  alice PM pecl
 NET "SERIAL_OUT_n[0]" LOC = U32;### J24  alice PM necl
 NET "SERIAL_OUT_p[1]" LOC = U28;### J25  alice AM pecl
 NET "SERIAL_OUT_n[1]" LOC = V29;### J26  alice AM necl
-NET "SERIAL_OUT_p[2]" LOC = U31;### J27  alice 500M clk
-NET "SERIAL_OUT_n[2]" LOC = U30;### J28  alice 500M clk
+#NET "SERIAL_OUT_p[2]" LOC = U31;### J27  alice 500M clk
+#NET "SERIAL_OUT_n[2]" LOC = U30;### J28  alice 500M clk
+NET "ext_clk_I" 		LOC = U31;### J27  alice 500M clk
+NET "ext_clk_IB" 		LOC = U30;### J28  alice 500M clk
 
 #NET "PPG_clock" LOC = U31;
 #NET "PPG_start" LOC = U30;
@@ -281,12 +283,11 @@ NET "Dac_Sclk" 			LOC = V30;	### J10 9
 NET "TP[5]"   	 LOC = W30;	### J10 10
 
 NET "syn_light_ext" LOC = Y32;### J12 1
-#NET "ext_clk_I" TNM_NET = "ext_clk_I";
-#TIMESPEC TS_ext_clk_I = PERIOD "ext_clk_I" 2 ns HIGH 50 %;
-#NET "ext_clk_IB" TNM_NET = "ext_clk_IB";
-#TIMESPEC TS_ext_clk_I= PERIOD "ext_clk_IB" 2 ns HIGH 50 %;
-#NET "ext_clk_I" LOC = C28;    ### J9 1 clock from PPG shuld be 125M
-#NET "ext_clk_IB" LOC = B28;   ### J9 2
+NET "ext_clk_I" TNM_NET = "ext_clk_I";
+TIMESPEC TS_ext_clk_I = PERIOD "ext_clk_I" 4 ns HIGH 50 %;
+NET "ext_clk_IB" TNM_NET = "ext_clk_IB";
+TIMESPEC TS_ext_clk_I= PERIOD "ext_clk_IB" 4 ns HIGH 50 %;
+NET "ext_clk_I" CLOCK_DEDICATED_ROUTE = FALSE;
 
 NET "syn_light_awg_out" LOC = C28;    ### J9 1 
 NET "Tp[2]" LOC = B28;    ### J9 2
@@ -440,8 +441,8 @@ INST "Inst_multichnlTDC/Chnl_4_inst/carrychain_whole_inst/carrychain_plain_inst/
 
 NET "send_en_am_p" IOSTANDARD = LVPECL_25;
 NET "send_en_am_n" IOSTANDARD = LVPECL_25;
-#NET "ext_clk_I" IOSTANDARD = LVPECL_25;
-#NET "ext_clk_IB" IOSTANDARD = LVPECL_25;
+NET "ext_clk_I" IOSTANDARD = LVPECL_25;
+NET "ext_clk_IB" IOSTANDARD = LVPECL_25;
 NET "SERIAL_OUT_n[0]" IOSTANDARD = LVPECL_25;
 NET "SERIAL_OUT_p[0]" IOSTANDARD = LVPECL_25;
 #NET "SERIAL_OUT_p[1]" IOSTANDARD = LVPECL_25;

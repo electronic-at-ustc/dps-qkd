@@ -34,6 +34,7 @@ entity DPS_control is
  port(
 		sys_clk_80M        : in  std_logic;--80MHz
 		sys_clk_250M      : in  std_logic;--250MHz
+		ext_clk		      : in  std_logic;--250MHz
       sys_rst_n       		 : in  std_logic;
 	  
 	  exp_running				:  in std_logic;--80M clock domain
@@ -101,6 +102,12 @@ architecture Behavioral of DPS_control is
 	 signal  set_chopper_disable_cnt_250m	: std_logic_vector(31 downto 0);--for Bob
 	  
 
+	signal syn_light_out_reg1 	: std_logic;
+	signal syn_light_out_reg2 	: std_logic;
+	
+	signal send_en_AM_out_reg1 	: std_logic;
+	signal send_en_AM_out_reg2 	: std_logic;
+	
 	signal exp_running_reg 	: std_logic;
 	signal exp_running_d1 : std_logic;
 	
@@ -339,14 +346,14 @@ begin
   process(sys_clk_250M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
-			syn_light				<= '0';
+--			syn_light				<= '0';
 			send_en					<= '0';
-			send_en_AM				<= '0';
+--			send_en_AM				<= '0';
 		else
 			if(sys_clk_250M'event and sys_clk_250M = '1') then
-				syn_light				<= syn_light_reg;
+--				syn_light				<= syn_light_reg;
 				send_en					<= send_en_PM_reg;
-				send_en_AM				<= send_en_AM_reg;
+--				send_en_AM				<= send_en_AM_reg;
 			end if;
 		end if;
   end process;
@@ -447,17 +454,51 @@ begin
 --      GE => '1'     -- Gate enable input
 --   );
 	
-	FDCE_inst : FDCE
-   generic map (
-      INIT => '0') -- Initial value of register ('0' or '1')  
-   port map (
-      Q => syn_light_awg_out,      -- Data output
-      C => syn_light_awg,      -- Clock input
-      CE => '1',    -- Clock enable input
-      CLR => CLR_awg,  -- Asynchronous clear input
-      D => '1'       -- Data input
-   );
+--	FDCE_inst : FDCE
+--   generic map (
+--      INIT => '0') -- Initial value of register ('0' or '1')  
+--   port map (
+--      Q => syn_light_awg_out,      -- Data output
+--      C => syn_light_awg,      -- Clock input
+--      CE => '1',    -- Clock enable input
+--      CLR => CLR_awg,  -- Asynchronous clear input
+--      D => '1'       -- Data input
+--   );
   
   syn_light_awg_inv <= not syn_light_awg;
+  
+  process(ext_clk, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			syn_light				<= '0';
+			syn_light_out_reg1	<= '0';
+			syn_light_out_reg2	<= '0';
+		else
+			if(ext_clk'event and ext_clk = '1') then
+				syn_light_out_reg1	<= syn_light_reg;
+				syn_light_out_reg2	<= syn_light_out_reg1;
+				syn_light				<= syn_light_out_reg2;
+			end if;
+		end if;
+  end process;
+  
+  process(ext_clk, sys_rst_n) 
+  begin 
+		if(sys_rst_n = '0') then
+			send_en_AM				<= '0';
+			send_en_AM_out_reg1	<= '0';
+			send_en_AM_out_reg2	<= '0';
+			syn_light_awg_out		<= '0';
+		else
+			if(ext_clk'event and ext_clk = '1') then
+				send_en_AM_out_reg1	<= send_en_AM_reg;
+				send_en_AM_out_reg2	<= send_en_AM_out_reg1;
+				send_en_AM				<= send_en_AM_out_reg2;
+				syn_light_awg_out		<= send_en_AM_out_reg2;
+			end if;
+		end if;
+  end process;
+  
+  
 end Behavioral;
 

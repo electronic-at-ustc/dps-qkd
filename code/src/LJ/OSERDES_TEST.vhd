@@ -289,6 +289,7 @@ COMPONENT clock_manage
 	PORT(
 		sys_clk_80M : IN std_logic;
 		sys_clk_250M : IN std_logic;
+		ext_clk : IN std_logic;
 		sys_rst_n : IN std_logic;
 		exp_running : IN std_logic;
 		Alice_H_Bob_L : IN std_logic;
@@ -426,7 +427,7 @@ COMPONENT clock_manage
 	signal single_mode : std_logic;
 	signal sys_clk_200M : std_logic;
 	signal sys_clk_500M : std_logic;
---	signal sys_clk_100M : std_logic;
+	signal ext_clk : std_logic;
 	signal sys_clk_250M : std_logic;
 signal		Dac_Finish	 			: std_logic;		
 signal		poc_test_en 			: std_logic;		
@@ -541,7 +542,7 @@ Inst_clock_manage: clock_manage PORT MAP(
 		CLK_OUT1 => sys_clk_200M,
 		CLK_OUT2 => sys_clk_250M,--sys_clk_100M,
 		CLK_OUT3 => sys_clk_500M,
-		CLK_OUT4 => open,
+		CLK_OUT4 => ext_clk,
 		CLK_OUT5 => open
 	);
 --	PPG_clock	<= send_en;
@@ -692,7 +693,8 @@ PORT MAP(
 	chopper_ctrl<= chopper_ctrl_send;
 	Inst_DPS_control: DPS_control PORT MAP(
 		sys_clk_80M => sys_clk,
-		sys_clk_250M => sys_clk_250m,
+		sys_clk_250M => sys_clk_250M,
+		ext_clk => ext_clk,
 		sys_rst_n => sys_rst_n,
 		single_mode => single_mode,
 		exp_running => exp_running,
