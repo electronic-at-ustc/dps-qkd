@@ -122,6 +122,7 @@ architecture Behavioral of DPS_control is
 	signal send_enable	 			: std_logic;
 	
 	signal send_en_AM_reg 			: std_logic;
+	signal send_en_AM_sig 			: std_logic;
 	signal send_en_PM_reg 			: std_logic;
 --	signal pm_steady_enable			: std_logic;
 	
@@ -328,9 +329,9 @@ begin
   process(syn_light_cnt, DPS_round_cnt_AM, DPS_round_cnt_AM_sub64) 
   begin 
 		if(syn_light_cnt < DPS_round_cnt_AM and syn_light_cnt >= DPS_round_cnt_AM_sub64) then
-			send_en_AM_reg	<= '1'; 
+			send_en_AM_sig	<= '1'; 
 		else
-			send_en_AM_reg	<= '0';
+			send_en_AM_sig	<= '0';
 		end if;
   end process;
   --产生PM使能信号，1次使能持续128个时钟, 只在发射端有效
@@ -346,14 +347,14 @@ begin
   process(sys_clk_250M, sys_rst_n) 
   begin 
 		if(sys_rst_n = '0') then
---			syn_light				<= '0';
+			syn_light				<= '0';
 			send_en					<= '0';
---			send_en_AM				<= '0';
+			send_en_AM_reg			<= '0';
 		else
 			if(sys_clk_250M'event and sys_clk_250M = '1') then
---				syn_light				<= syn_light_reg;
+				syn_light				<= syn_light_reg;
 				send_en					<= send_en_PM_reg;
---				send_en_AM				<= send_en_AM_reg;
+				send_en_AM_reg			<= send_en_AM_sig;
 			end if;
 		end if;
   end process;
@@ -467,20 +468,20 @@ begin
   
   syn_light_awg_inv <= not syn_light_awg;
   
-  process(ext_clk, sys_rst_n) 
-  begin 
-		if(sys_rst_n = '0') then
-			syn_light				<= '0';
-			syn_light_out_reg1	<= '0';
-			syn_light_out_reg2	<= '0';
-		else
-			if(ext_clk'event and ext_clk = '1') then
-				syn_light_out_reg1	<= syn_light_reg;
-				syn_light_out_reg2	<= syn_light_out_reg1;
-				syn_light				<= syn_light_out_reg2;
-			end if;
-		end if;
-  end process;
+--  process(ext_clk, sys_rst_n) 
+--  begin 
+--		if(sys_rst_n = '0') then
+--			syn_light				<= '0';
+--			syn_light_out_reg1	<= '0';
+--			syn_light_out_reg2	<= '0';
+--		else
+--			if(ext_clk'event and ext_clk = '1') then
+--				syn_light_out_reg1	<= syn_light_reg;
+--				syn_light_out_reg2	<= syn_light_out_reg1;
+--				syn_light				<= syn_light_out_reg2;
+--			end if;
+--		end if;
+--  end process;
   
   process(ext_clk, sys_rst_n) 
   begin 
