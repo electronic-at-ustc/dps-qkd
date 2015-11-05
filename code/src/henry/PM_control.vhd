@@ -124,7 +124,8 @@ signal Dac_set_result_low : std_logic_vector(11 downto 0);
 signal scan_dac_data : std_logic_vector(11 downto 0);
 
 signal step_cnt_reg		: std_logic_vector(7 downto 0);
-signal scan_inc_cnt_reg	: std_logic_vector(7 downto 0);
+signal coarse_step_size	: std_logic_vector(7 downto 0);
+signal fine_step_size	: std_logic_vector(7 downto 0);
 signal step_size			: std_logic_vector(7 downto 0);
 signal pm_stable_cnt_reg	: std_logic_vector(15 downto 0);
 signal poc_stable_cnt_reg 	: std_logic_vector(15 downto 0);
@@ -137,6 +138,7 @@ signal poc_cnt_set	 		: std_logic_vector(6 downto 0);
 --signal poc_count :	std_logic_vector(2 downto 0);
 --signal set_count	 : std_logic_vector(7 downto 0);
 --signal set_onetime : std_logic;
+signal two_scale_scan : std_logic;
 signal add_L_sub_H : std_logic;
 signal wait_stable_H_count_L : std_logic;
 signal add_set_count : std_logic;
@@ -202,16 +204,19 @@ begin
 		count_time_reg<=	X"01F4";--100us
 		pm_stable_cnt_reg<=	x"001A";--2us
 		poc_stable_cnt_reg<=	x"001A";--2us  
-		scan_inc_cnt_reg <=	x"32";--步进0.2V 二次步进0.1V --52
+		coarse_step_size <=	x"A4";--0.2V --粗扫时的步进电压值 x/5 * 4095
+		fine_step_size <=	x"20";--0.04V --精扫时的步进电压值
 		offset_voltage_reg<=	x"999";--  -1.5V
 		half_wave_voltage_reg<=	x"547";--1.1V
-		minus_voltage<=	"001" & x"D0";--下限 1V--9A
-		step_cnt_reg	<=	x"24";--36  扫点18次 算法5次 共23次 耗时2.4ms 最后一次用于设置最优值持续到2.5ms
+		minus_voltage<=	"001" & x"00";--下限 0.8F
+		step_cnt_reg	<=	x"26";--38  扫点19次 算法5次 共24次 耗时2.5ms 最后一次用于设置最优值持续到2.6ms
 		poc_cnt_set	<=	"0000000";--
 		use_8apd	<= '0';
 		use_4apd	<= '0';
 		add_L_sub_H	<= '0';
+		two_scale_scan	<= '0';
 	elsif rising_edge(sys_clk_80M) then		
+		minus_voltage	<= step_cnt_reg(5 downto 3) * coarse_step_size;
 		if(offset_voltage_reg(11) = '1') then
 			config_reg3	  <= ('1' & half_wave_voltage_reg(10 downto 0)) - offset_voltage_reg(10 downto 0);
 		else
@@ -247,7 +252,7 @@ begin
 				use_4apd<=	reg_wr_data(1);
 			end if;
 			if(reg_wr_addr = 8)then
-				scan_inc_cnt_reg<= reg_wr_data(7 downto 0);
+				coarse_step_size<= reg_wr_data(7 downto 0);
 				step_cnt_reg	<=	(reg_wr_data(14 downto 8)&'0');
 			end if;
 			if(reg_wr_addr = 9)then
@@ -257,11 +262,15 @@ begin
 				half_wave_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 11)then
-				minus_voltage <=	reg_wr_data(10 downto 0);
+				--minus_voltage <=	reg_wr_data(10 downto 0);
 			end if;
 			if(reg_wr_addr = 12)then
 				poc_cnt_set <=	reg_wr_data(6 downto 0);
 				add_L_sub_H	<= reg_wr_data(8);
+			end if;
+			if(reg_wr_addr = 13)then
+				fine_step_size <=	reg_wr_data(7 downto 0);
+				two_scale_scan	<= reg_wr_data(8);
 			end if;
 		else
 			null;
@@ -361,8 +370,10 @@ end process;
 			wait_start	<= '0';
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
 			wait_start	<= wait_start_reg;
-			if(scan_data_store_en = '1') then
-				if(scan_data_store_en_rising = '1' or wait_finish = '1') then
+			if(scan_data_store_en_rising = '1') then
+				wait_start_reg	<= '1';
+			elsif(scan_data_store_en = '1') then
+				if(wait_finish = '1') then
 					wait_start_reg	<= '1';
 				else
 					wait_start_reg	<= '0';	
@@ -471,7 +482,9 @@ begin
 			Dac_Ena		<= '0';
 		end if;
 		
-		if(set_count = 2) then
+		if(scan_data_store_en = '1') then
+			Dac_Data	<= scan_dac_data;
+		elsif(set_count = 2) then
 			Dac_Data	<= config_reg0;
 		elsif(set_count = 4) then
 			Dac_Data	<= config_reg1;
@@ -483,11 +496,9 @@ begin
 			Dac_Data	<= Dac_set_result;
 		elsif(set_count > 10 and set_count(0) = '0') then
 			Dac_Data <= Dac_set_result_low;
-		elsif(scan_data_store_en = '1') then
-			Dac_Data	<= scan_dac_data;
 		end if;
 		
-		if(set_count = 9 and wait_finish = '1') then
+		if(set_count = 9 and wait_finish = '1' and scan_data_store_en = '0') then
 			alt_begin	<= '1';
 		else
 			alt_begin	<= '0';
@@ -506,25 +517,24 @@ process(sys_clk_80M, sys_rst_n)
 				else
 					Dac_set_result_low  <= x"000";
 				end if;
-			--以7个扫点电压中计数最小的电压为中心扫点9个 范围（setp_cnt * setp_size / 2）
-			--扫点步长变为原来的1/2
---			elsif(wait_finish = '1' and set_count = 11 + step_cnt_reg(6 downto 1)) then
---				step_size	<= '0' & scan_inc_cnt_reg(7 downto 1);
---				if(min_set_result > minus_voltage(10 downto 1)) then
---					Dac_set_result_low <= min_set_result - minus_voltage(10 downto 1);
---				else
---					Dac_set_result_low  <= x"000";
---				end if;	
+			--以9个扫点电压中计数最小的电压为中心扫点9个 范围（setp_cnt * setp_size / 2）
+			--扫点步长变为原来的1/9
+			elsif(wait_finish = '1' and set_count = 11 + step_cnt_reg(6 downto 1) and two_scale_scan = '1') then
+				step_size	<= fine_step_size;
+				if(min_set_result > coarse_step_size) then
+					Dac_set_result_low <= min_set_result - coarse_step_size;
+				else
+					Dac_set_result_low  <= x"000";
+				end if;	
 			elsif(wait_finish = '1' and set_count = 9 + step_cnt_reg) then
 			--最后一次设置为最优DAC值，等待发射端发射编码信号
 				Dac_set_result_low <= min_set_result;
 			else
-				--
 				if(wait_finish = '1' and set_count > 11 and set_count(0) = '1') then
 					Dac_set_result_low <= Dac_set_result_low + step_size;
 				elsif(set_count < 10) then
 					Dac_set_result_low	<= (others =>'0');
-					step_size				<= scan_inc_cnt_reg;
+					step_size				<= coarse_step_size;
 				end if;
 			end if;			
 		end if;
@@ -545,7 +555,7 @@ begin
 			end if;
 			
 			if(wait_finish = '1' and wait_stable_H_count_L = '1') then
-				scan_dac_data	<= scan_dac_data + scan_inc_cnt_reg(7 downto 0);
+				scan_dac_data	<= scan_dac_data + coarse_step_size(7 downto 0);
 			end if;
 		end if;
 	end if;
