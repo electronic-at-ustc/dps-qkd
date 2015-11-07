@@ -58,14 +58,14 @@ entity atan_lut is
 --		count4	: in std_logic_vector(9 downto 0); --纯小数
 	-----128 lut?-------------------------------------	
 		min_set_result_en : in std_logic;
-		min_set_result : in std_logic_vector(11 downto 0);
+		min_set_result : in std_logic_vector(15 downto 0);--high 4 bit tell you this DAC result 1s for
 		--lut_wr_en: in std_logic; -- LUT查找表写使能 
 		lut_ram_rd_addr	: out std_logic_vector(9 downto 0); 
 		lut_ram_rd_data	: in std_logic_vector(15 downto 0); 
 		------lut_ram 128------------------------
 		addr_reset : in STD_LOGIC;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
-		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
+		lut_ram_128_data : out STD_LOGIC_vector(15 downto 0); 
 	
 	-----tan ram  reference-------------------------------------
 		use_8apd     : in std_logic;
@@ -97,10 +97,10 @@ COMPONENT lut_ram_128
     clka : IN STD_LOGIC;
     wea : IN STD_LOGIC_VECTOR(0 DOWNTO 0);
     addra : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
-    dina : IN STD_LOGIC_VECTOR(11 DOWNTO 0);
+    dina : IN STD_LOGIC_VECTOR(15 DOWNTO 0);
 	 clkb : IN STD_LOGIC;
     addrb : IN STD_LOGIC_VECTOR(6 DOWNTO 0);
-    doutb : OUT STD_LOGIC_VECTOR(11 DOWNTO 0)
+    doutb : OUT STD_LOGIC_VECTOR(15 DOWNTO 0)
   );
 END COMPONENT;
 

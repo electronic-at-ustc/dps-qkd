@@ -52,6 +52,8 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
 			pm_steady_test : IN std_logic;
 			scan_data_store_en : in  STD_LOGIC; 
 			pm_data_store_en : in  STD_LOGIC; 
+         single_mode : IN  std_logic;
+         syn_light : IN  std_logic;
          lut_ram_128_vld : IN  std_logic;
          reg_wr : IN  std_logic;
          reg_wr_addr : IN  std_logic_vector(3 downto 0);
@@ -74,6 +76,8 @@ ARCHITECTURE behavior OF PM_recieve_TB IS
    signal fifo_rst : std_logic := '0';
    signal dac_finish : std_logic := '0';
    signal reg_wr : std_logic := '0';
+   signal single_mode : std_logic := '0';
+   signal syn_light : std_logic := '0';
    signal pm_steady_test : std_logic := '0';
    signal lut_ram_128_vld : std_logic := '0';
    signal scan_data_store_en : std_logic := '0';
@@ -120,6 +124,8 @@ BEGIN
           scan_data_store_en => scan_data_store_en,
           reg_wr_addr => reg_wr_addr,
           reg_wr_data => reg_wr_data,
+          syn_light => syn_light,
+          single_mode => single_mode,
           apd_fpga_hit => apd_fpga_hit,
           lut_ram_rd_addr => lut_ram_rd_addr,
           lut_ram_rd_data => lut_ram_rd_data,
@@ -177,7 +183,7 @@ BEGIN
 --		wait until rising_edge(sys_clk_80m);
 --		pm_steady_test	<= '1';
 --		wait for 100 ns ;
-		wait for 10 ms;
+		wait for 1 ms;
 		wait until rising_edge(sys_clk_80m);
 		chopper_ctrl	<= '1';
 		
