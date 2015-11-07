@@ -120,11 +120,11 @@ architecture Behavioral of PM_receive      is
 
 		------lut_ram 128------------------------
 		min_set_result_en : in std_logic;
-		min_set_result : in std_logic_vector(11 downto 0);
+		min_set_result : in std_logic_vector(15 downto 0);
 		addr_reset : in STD_LOGIC;
 --		lut_ram_128_rd : in STD_LOGIC;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
-		lut_ram_128_data : out STD_LOGIC_vector(11 downto 0); 
+		lut_ram_128_data : out STD_LOGIC_vector(15 downto 0); 
 		------
 		tan_adj_voltage : in std_logic_vector(11 downto 0);
 		half_wave_voltage : in std_logic_vector(11 downto 0);
@@ -227,10 +227,10 @@ architecture Behavioral of PM_receive      is
 		chopper_ctrl  : in std_logic;
 		lut_ram_128_vld  : in std_logic;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
-		lut_ram_128_data : in STD_LOGIC_vector(11 downto 0); 
+		lut_ram_128_data : in STD_LOGIC_vector(15 downto 0); 
 		
 		min_set_result_en : out std_logic;
-		min_set_result : out std_logic_vector(11 downto 0);
+		min_set_result : out std_logic_vector(15 downto 0);
 		alg_data_wr : OUT std_logic;
 		alg_data_wr_data : OUT std_logic_vector(47 downto 0)
 		);
@@ -248,7 +248,7 @@ architecture Behavioral of PM_receive      is
 	signal dac_set_result :std_logic_vector(11 downto 0);
 	signal DAC_set_data :std_logic_vector(11 downto 0);
 	signal min_set_result_en : std_logic;
-	signal min_set_result : std_logic_vector(11 downto 0);
+	signal min_set_result : std_logic_vector(15 downto 0);
 --	signal Dac_Data :std_logic_vector(11 downto 0);
 	signal chnl_cnt_reg0_out : std_logic_vector(9 downto 0);
 	signal chnl_cnt_reg1_out : std_logic_vector(9 downto 0);
@@ -265,7 +265,7 @@ architecture Behavioral of PM_receive      is
 	signal half_wave_voltage : std_logic_vector(11 downto 0);
 	signal offset_voltage : std_logic_vector(11 downto 0);
 	
-	signal lut_ram_128_data_sig : std_logic_vector(11 downto 0);
+	signal lut_ram_128_data_sig : std_logic_vector(15 downto 0);
 	
 	signal	wait_start	 :	std_logic;
 	signal	wait_count 	 : std_logic_vector(19 downto 0);
@@ -321,7 +321,7 @@ begin
 		lut_ram_128_addr =>  lut_ram_128_addr,
 		Dac_set_result => Dac_set_result,
 		tan_adj_voltage => tan_adj_voltage,
-		min_set_result => min_set_result,
+		min_set_result => min_set_result(11 downto 0),
 		wait_start => wait_start,
 		wait_count => wait_count,
 		wait_finish => wait_finish,
@@ -383,6 +383,6 @@ begin
 --		alt_begin => alt_begin,
 		chopper_ctrl => chopper_ctrl
 	);
-	lut_ram_128_data	<= lut_ram_128_data_sig;
+	lut_ram_128_data	<= lut_ram_128_data_sig(11 downto 0);
 end Behavioral;
 
