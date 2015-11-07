@@ -99,6 +99,7 @@ entity PM_control is
 		lut_ram_128_vld  : in std_logic;
 		lut_ram_128_addr : in STD_LOGIC_vector(6 downto 0);
 		min_set_result : in STD_LOGIC_vector(11 downto 0);
+		
 		-----
 		syn_light : in std_logic;--when high, go into phase steady state
 		chopper_ctrl : in std_logic--when high, go into phase steady state
@@ -123,6 +124,7 @@ signal minus_voltage : std_logic_vector(10 downto 0);
 signal Dac_set_result_low : std_logic_vector(11 downto 0);
 signal scan_dac_data : std_logic_vector(11 downto 0);
 
+signal fine_scan_cnt		: std_logic_vector(7 downto 0);
 signal step_cnt_reg		: std_logic_vector(7 downto 0);
 signal coarse_step_size	: std_logic_vector(7 downto 0);
 signal fine_step_size	: std_logic_vector(7 downto 0);
@@ -148,6 +150,7 @@ signal chopper_ctrl_1d : std_logic;
 signal pm_steady_test_rising : std_logic;
 signal pm_steady_test_1d : std_logic;
 --signal set_onetime_end_1d : std_logic;
+signal use_atan_alg		: std_logic;
 signal single_start		: std_logic;
 signal single_start_d1	: std_logic;
 signal complete		: std_logic;
@@ -194,6 +197,7 @@ scan_data_store_en_rising  	<=  (not scan_data_store_en_1d) and scan_data_store_
 ------128 times stable no change  latch------------
 half_wave_voltage	<= half_wave_voltage_reg;
 offset_voltage	<= offset_voltage_reg;
+use_8apd			<= not use_atan_alg;
 config_reg_wr : process(sys_clk_80M,sys_rst_n)
 begin
 	if(sys_rst_n = '0') then
@@ -204,19 +208,25 @@ begin
 		count_time_reg<=	X"01F4";--100us
 		pm_stable_cnt_reg<=	x"001A";--2us
 		poc_stable_cnt_reg<=	x"001A";--2us  
-		coarse_step_size <=	x"A4";--0.2V --粗扫时的步进电压值 x/5 * 4095
-		fine_step_size <=	x"20";--0.04V --精扫时的步进电压值
+		coarse_step_size <=	x"D0";--0.2V --粗扫时的步进电压值 x/5 * 4095 * 2
+		fine_step_size <=	x"15";--0.05V --精扫时的步进电压值
 		offset_voltage_reg<=	x"999";--  -1.5V
-		half_wave_voltage_reg<=	x"547";--1.1V
-		minus_voltage<=	"001" & x"00";--下限 0.8F
-		step_cnt_reg	<=	x"26";--38  扫点19次 算法5次 共24次 耗时2.5ms 最后一次用于设置最优值持续到2.6ms
+		half_wave_voltage_reg<=	x"666";--2V 547 1.6V
+		minus_voltage<=	"110" & x"00";--下限 0.8F
+		step_cnt_reg	<=	x"24";--38  扫点19次 算法5次 共24次 耗时2.5ms 最后一次用于设置最优值持续到2.6ms
 		poc_cnt_set	<=	"0000000";--
-		use_8apd	<= '0';
-		use_4apd	<= '0';
+		use_atan_alg	<= '0';
+--		use_8apd	<= '0';
+		use_4apd	<= '1';
 		add_L_sub_H	<= '0';
-		two_scale_scan	<= '0';
+		two_scale_scan	<= '1';
 	elsif rising_edge(sys_clk_80M) then		
-		minus_voltage	<= step_cnt_reg(5 downto 3) * coarse_step_size;
+--		if(two_scale_scan = '1') then
+--			minus_voltage	<= step_cnt_reg(5 downto 3) * coarse_step_size;
+--		else
+--			minus_voltage	<= step_cnt_reg(5 downto 2) * coarse_step_size(6 downto 0);
+--		end if;
+		
 		if(offset_voltage_reg(11) = '1') then
 			config_reg3	  <= ('1' & half_wave_voltage_reg(10 downto 0)) - offset_voltage_reg(10 downto 0);
 		else
@@ -248,8 +258,9 @@ begin
 				poc_stable_cnt_reg<=	reg_wr_data(15 downto 0);
 			end if;
 			if(reg_wr_addr = 7)then
-				use_8apd<=	reg_wr_data(0);
-				use_4apd<=	reg_wr_data(1);
+--				use_8apd<=	reg_wr_data(0);
+				use_atan_alg<=	reg_wr_data(0);
+				use_4apd		<=	reg_wr_data(1);
 			end if;
 			if(reg_wr_addr = 8)then
 				coarse_step_size<= reg_wr_data(7 downto 0);
@@ -262,7 +273,7 @@ begin
 				half_wave_voltage_reg<=	reg_wr_data(11 downto 0);
 			end if;
 			if(reg_wr_addr = 11)then
-				--minus_voltage <=	reg_wr_data(10 downto 0);
+				minus_voltage <=	reg_wr_data(10 downto 0);
 			end if;
 			if(reg_wr_addr = 12)then
 				poc_cnt_set <=	reg_wr_data(6 downto 0);
@@ -349,9 +360,11 @@ end process;
 --signal 	state : STD_LOGIC_VECTOR(4 downto 0);
 --signal 	state_next : STD_LOGIC_VECTOR(4 downto 0);
 --
-	process(alt_end, wait_finish, set_count) 
+	process(alt_end, wait_finish, set_count, use_atan_alg) 
   begin 
-		if(wait_finish = '1' and set_count /= 9) then
+		if(use_atan_alg = '0') then
+			add_set_count	<= wait_finish;
+		elsif(wait_finish = '1' and set_count /= 9) then
 			add_set_count	<= '1';
 		elsif(alt_end = '1' and set_count = 9) then
 			add_set_count	<= '1';
@@ -381,6 +394,12 @@ end process;
 			else
 				if((chopper_ctrl_rising = '1' or pm_steady_test_rising = '1') and pm_data_store_en = '1') then
 					wait_start_reg	<= '1';		
+				elsif(use_atan_alg = '0') then
+					if(wait_finish = '1' and set_count > 0 and  complete = '0') then
+						wait_start_reg	<= '1';	
+					else
+						wait_start_reg	<= '0';
+					end if;
 				elsif(wait_finish = '1' and set_count > 0 and set_count /= 9 and complete = '0') then
 					wait_start_reg	<= '1';	
 				elsif(alt_end = '1' and set_count = 9) then
@@ -484,6 +503,10 @@ begin
 		
 		if(scan_data_store_en = '1') then
 			Dac_Data	<= scan_dac_data;
+		elsif(use_atan_alg = '0' ) then
+			if(set_count(0) = '0') then
+				Dac_Data <= Dac_set_result_low;
+			end if;
 		elsif(set_count = 2) then
 			Dac_Data	<= config_reg0;
 		elsif(set_count = 4) then
@@ -498,7 +521,7 @@ begin
 			Dac_Data <= Dac_set_result_low;
 		end if;
 		
-		if(set_count = 9 and wait_finish = '1' and scan_data_store_en = '0') then
+		if(set_count = 9 and wait_finish = '1' and scan_data_store_en = '0' and use_atan_alg = '1') then
 			alt_begin	<= '1';
 		else
 			alt_begin	<= '0';
@@ -511,16 +534,29 @@ process(sys_clk_80M, sys_rst_n)
 		if(sys_rst_n = '0') then
 			Dac_set_result_low	<= (others =>'0');
 		elsif(sys_clk_80M'event and sys_clk_80M = '1') then
-			if(set_count = 10) then--以算法算出结果为中心扫点9个 范围（setp_cnt * setp_size）
-				if(Dac_set_result > minus_voltage) then
+			if(use_atan_alg = '0' and set_count < 2) then
+				--不使用稳相算法时，初始电压从minus_voltage开始
+				Dac_set_result_low	<= '0' & minus_voltage;
+			elsif(set_count = 10 and use_atan_alg = '1') then
+				--使用稳相算法时，前5次为算法过程，5次之后，
+				--当为单级扫描时，以算法算出结果为中心扫点setp_cnt/2个 范围±（setp_cnt/2 * coarse_setp_size）, 下限为计算结果-minus_voltage
+				--当为两级扫描时，以算法算出结果为中心扫点setp_cnt/4个 范围±（setp_cnt/4 * coarse_setp_size）,
+				--        然后，以粗扫描的结果为中心扫点setp_cnt/2 - setp_cnt/4个
+				--注意扫描下限的范围
+				if(Dac_set_result > minus_voltage and Dac_set_result < (x"FFF" - minus_voltage)) then
 					Dac_set_result_low <= Dac_set_result - minus_voltage;
 				else
-					Dac_set_result_low  <= x"000";
+					if(Dac_set_result >= (x"FFF" - minus_voltage)) then
+						Dac_set_result_low  <= Dac_set_result(11 downto 0) - (half_wave_voltage_reg(10 downto 0) & '0') - minus_voltage;
+					else
+						Dac_set_result_low  <= Dac_set_result(10 downto 0) + (half_wave_voltage_reg(10 downto 0) & '0') - minus_voltage;
+					end if;
 				end if;
 			--以9个扫点电压中计数最小的电压为中心扫点9个 范围（setp_cnt * setp_size / 2）
 			--扫点步长变为原来的1/9
-			elsif(wait_finish = '1' and set_count = 11 + step_cnt_reg(6 downto 1) and two_scale_scan = '1') then
-				step_size	<= fine_step_size;
+			elsif(wait_finish = '1' and set_count = fine_scan_cnt and two_scale_scan = '1') then
+			--当两级扫描使能时，步进长度变为精扫描步长
+			--DAC值从前面的最有结果中得出
 				if(min_set_result > coarse_step_size) then
 					Dac_set_result_low <= min_set_result - coarse_step_size;
 				else
@@ -530,15 +566,42 @@ process(sys_clk_80M, sys_rst_n)
 			--最后一次设置为最优DAC值，等待发射端发射编码信号
 				Dac_set_result_low <= min_set_result;
 			else
-				if(wait_finish = '1' and set_count > 11 and set_count(0) = '1') then
-					Dac_set_result_low <= Dac_set_result_low + step_size;
-				elsif(set_count < 10) then
-					Dac_set_result_low	<= (others =>'0');
-					step_size				<= coarse_step_size;
+				if(wait_finish = '1' and  set_count(0) = '1') then
+					--1 poc等待
+					--奇数：PM电压设置并等待PM稳定
+					--偶数：APD计数时间
+					--使用算法时，从11开始，不使用算法时，从3开始
+					if((set_count > 11 and use_atan_alg = '1') or (set_count > 1 and use_atan_alg = '0')) then
+						Dac_set_result_low <= Dac_set_result_low + step_size;
+					end if;
 				end if;
 			end if;			
 		end if;
   end process;
+  
+   
+process(sys_clk_80M, sys_rst_n) 
+begin
+	if (sys_rst_n = '0') then
+		fine_scan_cnt 				<= x"00";
+	elsif rising_edge(sys_clk_80M) then
+		if(two_scale_scan = '1') then
+			if(use_atan_alg = '1') then
+				fine_scan_cnt <= x"0B" + step_cnt_reg(7 downto 1);
+			else
+				fine_scan_cnt  <= x"07" + step_cnt_reg(7 downto 1);
+			end if;
+			
+			if(set_count < fine_scan_cnt) then
+				step_size				<= coarse_step_size;
+			else
+				step_size				<= fine_step_size;
+			end if;
+		else
+			step_size				<= coarse_step_size;
+		end if;
+	end if;
+ end process;		
 
 process(sys_clk_80M, sys_rst_n) 
 begin
